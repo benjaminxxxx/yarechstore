@@ -60,7 +60,7 @@ class ProductsList extends Component
             $rules['barcode'] = ['unique:products,barcode,' . $this->productId];
         }
         if ($this->generic_image_url) {
-            $rules['generic_image_url'] = 'image|max:10240'; // 10MB Max
+            $rules['generic_image_url'] = 'image'; // 10MB Max
         }
 
 
