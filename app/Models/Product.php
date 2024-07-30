@@ -34,7 +34,8 @@ class Product extends Model
     public function getPhotoUrlAttribute()
     {
         if ($this->generic_image_url) {
-            return asset('storage/' . $this->generic_image_url);
+            // Assuming $this->generic_image_url contains a path relative to 'public/uploads/'
+            return asset($this->generic_image_url);
         } else {
             $avatar = "https://avatar.iran.liara.run/username?username=" . $this->name;
             return $avatar;

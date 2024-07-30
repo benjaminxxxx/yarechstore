@@ -84,7 +84,7 @@ class ProductsList extends Component
         $this->branch_id = $branch ? $branch->id : null;
 
         $this->tax_id = 1;
-        $this->products = Product::where('branch_id',$this->branch_id)->get();
+        $this->products = Product::where('branch_id', $this->branch_id)->get();
         $this->units = Unit::all();
         $this->brands = Brand::all();
         $this->suppliers = Supplier::all();
@@ -189,6 +189,45 @@ class ProductsList extends Component
 
         $directory = "uploads/{$currentYear}/{$currentMonth}";
 
+        // Define the full path where the image will be stored
+        $path = public_path($directory);
+
+        // Create the directory if it doesn't exist
+        if (!file_exists($path)) {
+            mkdir($path, 0755, true);
+        }
+
+        $filename = Str::slug(pathinfo($image->getClientOriginalName(), PATHINFO_FILENAME));
+        $extension = $image->getClientOriginalExtension();
+        $fullFilename = "{$filename}.{$extension}";
+        $counter = 1;
+
+        // Check if file already exists and append counter if it does
+        while (file_exists("{$path}/{$fullFilename}")) {
+            $fullFilename = "{$filename}-{$counter}.{$extension}";
+            $counter++;
+        }
+
+        $imgManager = new ImageManager(new Driver());
+        $thumbImage = $imgManager->read($image->getRealPath());
+
+        $thumbImage->cover(400, 400);
+
+        // Store the image
+        $thumbImage->save("{$path}/{$fullFilename}");
+
+        // Return the relative path
+        return "{$directory}/{$fullFilename}";
+    }
+
+    /*
+    protected function storeCoverImage($image)
+    {
+        $currentYear = now()->year;
+        $currentMonth = now()->month;
+
+        $directory = "uploads/{$currentYear}/{$currentMonth}";
+
         $filename = Str::slug(pathinfo($image->getClientOriginalName(), PATHINFO_FILENAME));
         $extension = $image->getClientOriginalExtension();
         $fullFilename = "{$filename}.{$extension}";
@@ -211,7 +250,7 @@ class ProductsList extends Component
 
         // Remove 'public/' from the stored path
         return str_replace('public/', '', $storedPath);
-    }
+    }*/
     /*
     protected function storeCoverImage($image)
     {
