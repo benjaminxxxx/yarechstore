@@ -18,6 +18,33 @@ class Branch extends Model
     {
         return $this->belongsTo(Company::class);
     }
+    public function products()
+    {
+        return $this->hasMany(Product::class);
+    }
+
+    public function inventories()
+    {
+        return $this->hasMany(Inventory::class);
+    }
+
+    public function getProductsWithInventoryAttribute()
+    {
+        return $this->products()->with('inventories')->get()->map(function ($product) {
+            $inventory = $product->inventories->where('branch_id', $this->id)->first();
+            return (object) [
+                'id' => $product->id,
+                'name' => $product->name,
+                'generic_image_url' => $product->generic_image_url,
+                'unit_type' => $product->unit_type,
+                'stock' => $inventory->stock ?? null,
+                'minimum_stock' => $inventory->minimum_stock ?? null,
+                'location' => $inventory->location ?? null,
+                'expiry_date' => $inventory->expiry_date ?? null,
+                'is_inventoried' => $inventory !== null
+            ];
+        });
+    }
 
     public function users()
     {

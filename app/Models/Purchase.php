@@ -17,6 +17,7 @@ class Purchase extends Model
         'operation_number',
         'total_amount',
         'status',
+        'branch_id'
     ];
 
     public function details()

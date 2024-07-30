@@ -60,7 +60,7 @@ class ProductsList extends Component
             $rules['barcode'] = ['unique:products,barcode,' . $this->productId];
         }
         if ($this->generic_image_url) {
-            $rules['generic_image_url'] = 'image'; // 10MB Max
+            $rules['generic_image_url'] = 'image';
         }
 
 
@@ -181,6 +181,41 @@ class ProductsList extends Component
 
             $this->addError('error_message', 'Hubo un problema al actualizar los datos del producto:' . $e->getMessage());
         }
+    }
+    protected function duplicateImage($imagePath)
+    {
+        // Obtén la información del archivo original
+        $originalPath = public_path($imagePath);
+        $originalExtension = pathinfo($originalPath, PATHINFO_EXTENSION);
+        $originalName = pathinfo($originalPath, PATHINFO_FILENAME);
+
+        // Genera un nuevo nombre para la imagen duplicada
+        $newFilename = $originalName . '-copia.' . $originalExtension;
+        $currentYear = now()->year;
+        $currentMonth = now()->month;
+        $directory = "uploads/{$currentYear}/{$currentMonth}";
+
+        $newDirectoryPath = public_path($directory);
+        $newImagePath = "{$directory}/{$newFilename}";
+
+        // Asegúrate de que el directorio de destino exista
+        if (!file_exists($newDirectoryPath)) {
+            mkdir($newDirectoryPath, 0755, true);
+        }
+
+        // Asegúrate de que el nombre de archivo sea único
+        $counter = 1;
+        while (file_exists("{$newDirectoryPath}/{$newFilename}")) {
+            $newFilename = $originalName . '-copia-' . $counter . '.' . $originalExtension;
+            $newImagePath = "{$directory}/{$newFilename}";
+            $counter++;
+        }
+
+        // Copia el archivo a la nueva ubicación
+        copy($originalPath, public_path($newImagePath));
+
+        // Retorna la nueva ruta relativa
+        return $newImagePath;
     }
     protected function storeCoverImage($image)
     {
@@ -372,35 +407,7 @@ class ProductsList extends Component
             session()->flash('error', 'Producto no encontrado.');
         }
     }
-    protected function duplicateImage($imagePath)
-    {
-        // Obtén la información del archivo original
-        $originalPath = storage_path('app/public/' . $imagePath);
-        $originalExtension = pathinfo($originalPath, PATHINFO_EXTENSION);
-        $originalName = pathinfo($originalPath, PATHINFO_FILENAME);
 
-        // Genera un nuevo nombre para la imagen duplicada
-        $newFilename = $originalName . '-copia.' . $originalExtension;
-        $currentYear = now()->year;
-        $currentMonth = now()->month;
-        $directory = "uploads/{$currentYear}/{$currentMonth}";
-
-        $counter = 1;
-        $newImagePath = "public/{$directory}/{$newFilename}";
-
-        // Asegúrate de que el nombre de archivo sea único
-        while (Storage::exists($newImagePath)) {
-            $newFilename = $originalName . '-copia-' . $counter . '.' . $originalExtension;
-            $newImagePath = "public/{$directory}/{$newFilename}";
-            $counter++;
-        }
-
-        // Copia el archivo a la nueva ubicación
-        Storage::copy('public/' . $imagePath, $newImagePath);
-
-        // Retorna la nueva ruta relativa
-        return str_replace('public/', '', $newImagePath);
-    }
     public function calculateFinalPrice()
     {
         try {

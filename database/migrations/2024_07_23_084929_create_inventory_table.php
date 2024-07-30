@@ -18,6 +18,7 @@ return new class extends Migration
             $table->integer('minimum_stock')->default(0);
             $table->string('location')->nullable();
             $table->date('expiry_date')->nullable();
+            $table->foreignId('branch_id')->nullable()->constrained('branches')->onDelete('set null');
             $table->timestamps();
             
         });

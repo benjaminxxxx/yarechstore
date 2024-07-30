@@ -23,6 +23,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('supplier_id')->references('id')->on('suppliers');
+            $table->foreignId('branch_id')->nullable()->constrained('branches')->onDelete('cascade');
         });
     }
 

@@ -21,6 +21,7 @@ return new class extends Migration
 
             $table->foreign('product_id')->references('id')->on('products');
             $table->foreign('purchase_id')->references('id')->on('purchases');
+            $table->foreignId('branch_id')->nullable()->constrained('branches')->onDelete('cascade');
         });
     }
 

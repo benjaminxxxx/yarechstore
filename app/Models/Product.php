@@ -47,5 +47,12 @@ class Product extends Model
     {
         return $this->belongsToMany(Category::class, 'category_products');
     }
-
+    public function inventories()
+    {
+        return $this->hasMany(Inventory::class);
+    }
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class, 'unit_type');
+    }
 }

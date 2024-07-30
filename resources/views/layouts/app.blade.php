@@ -174,6 +174,10 @@
                     <i class="fa fa-file-invoice"></i>
                     <span class="ms-3">Compras</span>
                 </x-link>
+                <x-link href="{{route('inventory')}}" :active="request()->routeIs('inventory')">
+                    <i class="fa fa-boxes"></i>
+                    <span class="ms-3">Inventario</span>
+                </x-link>
             </ul>
         </div>
     </aside>
