@@ -190,7 +190,7 @@
                         @if ($image_path || $generic_image_url)
                             @if ($image_path != null)
                                 <!-- Cuando la imagen ya está guardada -->
-                                <img src="{{ asset('storage/' . $image_path) }}" class="w-full object-cover">
+                                <img src="{{ asset($image_path) }}" class="w-full object-cover">
                             @endif
                             @if ($generic_image_url != null)
                                 <!-- Cuando se está previsualizando una imagen temporal -->
