@@ -21,6 +21,21 @@
         <div class="flex-1">
             <x-card>
                 <x-spacing>
+                    <form class="flex w-full shadow-lg">
+
+                        <div class="relative w-full">
+                            <div
+                                class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none text-indigo-600">
+                                <i class="fa fa-search"></i>
+                            </div>
+                            <x-input type="search" wire:model.live="search" id="default-search" class="w-full pl-10"
+                                autocomplete="off" placeholder="{{ __('Search...') }}" required />
+                        </div>
+                    </form>
+                </x-spacing>
+            </x-card>
+            <x-card class="mt-5">
+                <x-spacing>
                     <x-table>
                         <x-slot name="thead">
                             <tr>
@@ -52,14 +67,28 @@
                                         <x-td class="text-center">
                                             <div class="flex items-center justify-center">
                                                 <x-button wire:click="see('{{ $item->code }}')">
-                                                    <i class="fa fa-eye  mr-2"></i> {{ __('See') }}
+                                                    <i class="fa fa-eye  mr-2"></i> Ver stock
                                                 </x-button>
+
                                                 @if ($item->inventories->count() != 0)
-                                                    <!--<x-danger-button
-                                                        wire:confirm="{{ __('Are you sure you want to delete this item?') }}"
-                                                        wire:click="delete('{{ $item->code }}')" class="ml-1">
-                                                        <i class="fa fa-remove mr-2"></i> {{ __('Delete') }}
-                                                    </x-danger-button>-->
+                                                    @if ($item->child()->count() > 0)
+                                                        @if ($item->inventories[0]->stock > 0)
+                                                            <x-success-button class="ml-3"
+                                                                wire:click="openBox('{{ $item->code }}')">
+                                                                <i class="fa fa-box-open  mr-2"></i> Abrir 1
+                                                                {{ $item->unit ? $item->unit->name : '' }}
+                                                            </x-success-button>
+                                                        @endif
+                                                    @endif
+                                                @endif
+
+                                                @if ($item->parent_id)
+                                                    @if (count($item->inventories) == 1 && $item->inventories[0]->stock > $item->parent()->first()->units_per_package)
+                                                        <x-danger-button class="ml-3"
+                                                            wire:click="package('{{ $item->code }}')">
+                                                            <i class="fa fa-box mr-2"></i> Devolver a su empaque
+                                                        </x-danger-button>
+                                                    @endif
                                                 @endif
 
                                             </div>
@@ -81,44 +110,47 @@
                 </x-spacing>
             </x-card>
         </div>
-        <div class="w-full lg:w-96">
-            <x-card>
-                <x-spacing>
-                    <form wire:submit.prevent="store">
-                        <div>
-                            <x-label for="product_name">{{ __('Product') }}</x-label>
-                            <x-input type="text" wire:model="product_name" id="product_name" readonly />
-                            <x-input-error for="product_name" />
-                        </div>
-                        <div class="mt-3">
-                            <x-label for="location">{{ __('Location') }}</x-label>
-                            <x-input type="text" wire:model="location" id="location" />
-                            <x-input-error for="location" />
-                        </div>
-                        <div class="mt-3">
-                            <x-label for="stock">{{ __('Stock') }}</x-label>
-                            <x-input type="number" wire:model="stock" id="stock" />
-                            <x-input-error for="stock" />
-                        </div>
-                        <div class="mt-3">
-                            <x-label for="minimum_stock">{{ __('Minimum Stock') }}</x-label>
-                            <x-input type="number" wire:model="minimum_stock" id="minimum_stock" />
-                            <x-input-error for="minimum_stock" />
-                        </div>
-                        <div class="mt-3">
-                            <x-label for="expiry_date">{{ __('Expiry Date') }}</x-label>
-                            <x-input type="date" wire:model="expiry_date" id="expiry_date" />
-                            <x-input-error for="expiry_date" />
-                        </div>
-                        <div class="text-right mt-4">
-                            <x-secondary-button type="button" wire:click="closeForm"
-                                class="mr-2">{{ __('Cancel') }}</x-secondary-button>
-                            <x-button type="submit" wire:click="store" class="ml-3">{{ __('Save') }}</x-button>
-                        </div>
-                    </form>
-                </x-spacing>
-            </x-card>
-        </div>
+        @if ($product_id != null)
+            <div class="w-full lg:w-96">
+                <x-card>
+                    <x-spacing>
+                        <form wire:submit.prevent="store">
+                            <div>
+                                <x-label for="product_name">{{ __('Product') }}</x-label>
+                                <x-input type="text" wire:model="product_name" id="product_name" readonly />
+                                <x-input-error for="product_name" />
+                            </div>
+                            <div class="mt-3">
+                                <x-label for="location">{{ __('Location') }}</x-label>
+                                <x-input type="text" wire:model="location" id="location" />
+                                <x-input-error for="location" />
+                            </div>
+                            <div class="mt-3">
+                                <x-label for="stock">{{ __('Stock') }}</x-label>
+                                <x-input type="number" wire:model="stock" id="stock" />
+                                <x-input-error for="stock" />
+                            </div>
+                            <div class="mt-3">
+                                <x-label for="minimum_stock">{{ __('Minimum Stock') }}</x-label>
+                                <x-input type="number" wire:model="minimum_stock" id="minimum_stock" />
+                                <x-input-error for="minimum_stock" />
+                            </div>
+                            <div class="mt-3">
+                                <x-label for="expiry_date">{{ __('Expiry Date') }}</x-label>
+                                <x-input type="date" wire:model="expiry_date" id="expiry_date" />
+                                <x-input-error for="expiry_date" />
+                            </div>
+                            <div class="text-right mt-4">
+                                <x-secondary-button type="button" wire:click="closeForm"
+                                    class="mr-2">{{ __('Cancel') }}</x-secondary-button>
+                                <x-button type="submit" wire:click="store"
+                                    class="ml-3">{{ __('Save') }}</x-button>
+                            </div>
+                        </form>
+                    </x-spacing>
+                </x-card>
+            </div>
+        @endif
     </div>
 
 

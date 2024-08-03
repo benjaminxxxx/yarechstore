@@ -178,6 +178,10 @@
                     <i class="fa fa-boxes"></i>
                     <span class="ms-3">Inventario</span>
                 </x-link>
+                <x-link href="{{route('config.units')}}" :active="request()->routeIs('config.units')">
+                    <i class="fa fa-box"></i>
+                    <span class="ms-3">Unidades</span>
+                </x-link>
             </ul>
         </div>
     </aside>

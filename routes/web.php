@@ -7,9 +7,9 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\UnitController;
 use App\Http\Middleware\CheckBranches;
 use App\Http\Middleware\CheckBranchSelected;
-
 
 Route::middleware([
     'auth:sanctum',
@@ -27,4 +27,6 @@ Route::middleware([
     Route::get('/products',[ProductController::class,'index'])->name('products');
     Route::get('/purchases',[PurchaseController::class,'index'])->name('purchases');
     Route::get('/inventory',[InventoryController::class,'index'])->name('inventory');
+
+    Route::get('/config/units',[UnitController::class,'index'])->name('config.units');
 });

@@ -49,11 +49,13 @@ class ProductsList extends Component
     public $isCategoryOpen = false;
     public $categoriesFull;
     public $branch_id;
+    public $product_child;
     protected function rules()
     {
         $rules = [
             'name' => 'required|string',
-            'unit_type' => 'required'
+            'unit_type' => 'required',
+            'units_per_package'=>'required|integer'
         ];
 
         if ($this->barcode) {
@@ -75,6 +77,8 @@ class ProductsList extends Component
         'name.string' => 'El nombre del producto debe ser una cadena de texto.',
         'unit_type.required' => 'Debe seleccionar un tipo de unidad.',
         'barcode.unique' => 'Ya existe un producto con el mismo código de barras',
+        'units_per_package.required' => 'Debe haber al menos 1 unidad por envase',
+        'units_per_package.integer' => 'La cantidad debe ser un valor entero',
     ];
 
     public function mount()
@@ -84,7 +88,7 @@ class ProductsList extends Component
         $this->branch_id = $branch ? $branch->id : null;
 
         $this->tax_id = 1;
-        $this->products = Product::where('branch_id', $this->branch_id)->get();
+        $this->products = $branch->products()->whereNull('parent_id')->get();
         $this->units = Unit::all();
         $this->brands = Brand::all();
         $this->suppliers = Supplier::all();
@@ -96,7 +100,10 @@ class ProductsList extends Component
 
     public function searching()
     {
-        $this->products = Product::query()
+        $branchCode = Session::get('selected_branch');
+        $branch = Branch::where('code', $branchCode)->first();
+
+        $this->products = $branch->products()->whereNull('parent_id')
             ->where('branch_id', $this->branch_id) // Filtra por branch_id
             ->where(function ($query) {
                 $query->where('name', 'like', '%' . $this->search . '%')
@@ -111,9 +118,9 @@ class ProductsList extends Component
     }
     public function save()
     {
-        try {
+        $this->validate();
 
-            $this->validate();
+        try {    
 
             $coverImagePath = null;
             if ($this->generic_image_url) {
@@ -155,7 +162,7 @@ class ProductsList extends Component
                 }
                 $productData['updated_by'] = Auth::id();
                 $product->update($productData);
-
+                $this->updateChildProducts($product);
 
                 session()->flash('message', 'Producto actualizado con éxito.');
             } else {
@@ -174,12 +181,125 @@ class ProductsList extends Component
             $this->closeForm();
 
         } catch (QueryException $e) {
-
             $errorCode = $e->errorInfo[1];
-            $this->addError('error_message', 'Hubo un problema al actualizar los datos del producto (' . $errorCode . ') ' . $e->getMessage());
+            session()->flash('error', 'Hubo un problema al actualizar el producto (' . $errorCode . ') ' . $e->getMessage());
         } catch (\Exception $e) {
+            session()->flash('error', 'Hubo un problema al actualizar el producto: ' . $e->getMessage());
+        }
+    }
+    private function updateChildProducts($product)
+    {
+        // Obtener los productos hijos
+        $childProducts = Product::where('parent_id', $product->id)->get();
 
-            $this->addError('error_message', 'Hubo un problema al actualizar los datos del producto:' . $e->getMessage());
+        foreach ($childProducts as $childProduct) {
+            $childPurchasePrice = 0;
+            $childBasePrice = 0;
+            $childFinalPrice = 0;
+
+            if ($product->units_per_package && $product->units_per_package != 0) {
+                $childPurchasePrice = $product->purchase_price / $product->units_per_package;
+                $childBasePrice = $product->base_price ? $product->base_price / $product->units_per_package : null;
+                $childFinalPrice = $product->final_price ? $product->final_price / $product->units_per_package : null;
+            }
+
+            $childData = [
+                'purchase_price' => $childPurchasePrice,
+                'base_price' => $childBasePrice,
+                'igv' => $product->igv,
+                'final_price' => $childFinalPrice,
+                'description' => $product->description,
+                'brand_id' => $product->brand_id,
+                'sunatcode' => $product->sunatcode,
+                'supplier_id' => $product->supplier_id,
+                'branch_id' => $product->branch_id,
+                'updated_by' => Auth::id()
+            ];
+
+            $childProduct->update($childData);
+
+            if ($this->productCategories) {
+                $childProduct->categories()->sync($this->productCategories);
+            }
+        }
+    }
+    public function createProductChild($productId)
+    {
+        try {
+            $this->save();
+            // Obtener el producto padre
+            $product = Product::findOrFail($productId);
+
+            // Verificar si units_per_package es null o 0
+            if (!$product->units_per_package || $product->units_per_package == 0) {
+                session()->flash('error', 'El producto debe tener unidades por paquete válidos para evitar errores en el futuro.');
+                return;
+            }
+
+            // Calcular los nuevos precios
+            $childPurchasePrice = 0;
+            $childBasePrice = 0;
+            $childFinalPrice = 0;
+
+            if ($product->units_per_package && $product->units_per_package != 0) {
+                $childPurchasePrice = $product->purchase_price / $product->units_per_package;
+                $childBasePrice = $product->base_price ? $product->base_price / $product->units_per_package : null;
+                $childFinalPrice = $product->final_price ? $product->final_price / $product->units_per_package : null;
+            }
+            // Crear los datos del producto hijo
+            $childProductData = [
+                'name' => $product->name . ' - Unidad',
+                'unit_type' => 1, // Unidad
+                'purchase_price' => $childPurchasePrice,
+                'units_per_package' => 1, // Unidad
+                'base_price' => $childBasePrice,
+                'igv' => $product->igv,
+                'generic_image_url' => null, // No registra una imagen
+                'final_price' => $childFinalPrice,
+                'description' => null, // No se pasa la descripción
+                'barcode' => null, // No se pasa el código de barras
+                'sunatcode' => $product->sunatcode,
+                'brand_id' => $product->brand_id,
+                'supplier_id' => $product->supplier_id,
+                'branch_id' => $product->branch_id,
+                'parent_id' => $product->id, // Se asigna el producto padre
+                'code' => Str::random(15), // Genera un código único
+                'created_by' => Auth::id()
+            ];
+
+            // Crear el producto hijo
+            $childProduct = Product::create($childProductData);
+
+            // Asignar las mismas categorías del producto padre al producto hijo
+            if ($product->categories) {
+                $childProduct->categories()->sync($product->categories->pluck('id'));
+            }
+
+            session()->flash('message', 'Producto hijo creado con éxito.');
+            $this->see($productId);
+        } catch (QueryException $e) {
+            $errorCode = $e->errorInfo[1];
+            session()->flash('error', 'Hubo un problema al crear el producto hijo (' . $errorCode . ') ' . $e->getMessage());
+        } catch (\Exception $e) {
+            session()->flash('error', 'Hubo un problema al crear el producto hijo: ' . $e->getMessage());
+        }
+    }
+    public function delete($code)
+    {
+        try {
+            // Buscar el producto por su código
+            $product = Product::where('code', $code)->firstOrFail();
+
+            // Eliminar el producto
+            $product->delete();
+
+            // Mensaje de éxito
+            session()->flash('message', 'Producto eliminado con éxito.');
+            $this->product_child = null;
+
+        } catch (\Exception $e) {
+            // Manejar errores
+            session()->flash('error', 'Hubo un problema al eliminar el producto: ' . $e->getMessage());
         }
     }
     protected function duplicateImage($imagePath)
@@ -333,6 +453,7 @@ class ProductsList extends Component
             $this->sunatcode = $product->sunatcode;
             $this->brand_id = $product->brand_id;
             $this->supplier_id = $product->supplier_id;
+            $this->product_child = $product->child;
 
             $this->productCategories = $product->categories->pluck("id");
         } else {
@@ -411,8 +532,10 @@ class ProductsList extends Component
     public function calculateFinalPrice()
     {
         try {
-            $taxRate = $this->getTaxRate(); // Obtén la tasa de impuesto correspondiente
-            $this->final_price = round($this->base_price * (1 + $taxRate), 2);
+            if ($this->base_price) {
+                $taxRate = $this->getTaxRate(); // Obtén la tasa de impuesto correspondiente
+                $this->final_price = round($this->base_price * (1 + $taxRate), 2);
+            }
         } catch (\Exception $e) {
             $this->final_price = 0; // Setea un número válido en caso de error
         }
@@ -421,8 +544,10 @@ class ProductsList extends Component
     public function calculateBasePrice()
     {
         try {
-            $taxRate = $this->getTaxRate(); // Obtén la tasa de impuesto correspondiente
-            $this->base_price = round($this->final_price / (1 + $taxRate), 2);
+            if ($this->final_price) {
+                $taxRate = $this->getTaxRate(); // Obtén la tasa de impuesto correspondiente
+                $this->base_price = round($this->final_price / (1 + $taxRate), 2);
+            }
         } catch (\Exception $e) {
             $this->base_price = 0; // Setea un número válido en caso de error
         }
@@ -437,12 +562,20 @@ class ProductsList extends Component
 
     public function removeCategory($categoryId)
     {
-        $index = array_search($categoryId, $this->productCategories);
+        $productCategoriesArray = $this->productCategories->toArray();
 
+        // Buscar el índice del categoryId en el array
+        $index = array_search($categoryId, $productCategoriesArray);
+    
         if ($index !== false) {
-            unset($this->productCategories[$index]);
+            // Eliminar el elemento del array
+            unset($productCategoriesArray[$index]);
+    
             // Reindexar el array para evitar huecos
-            $this->productCategories = array_values($this->productCategories);
+            $productCategoriesArray = array_values($productCategoriesArray);
+    
+            // Convertir el array de nuevo a colección y actualizar la propiedad
+            $this->productCategories = collect($productCategoriesArray);
         }
     }
     public function openCategories()

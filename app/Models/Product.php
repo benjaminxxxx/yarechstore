@@ -55,4 +55,12 @@ class Product extends Model
     {
         return $this->belongsTo(Unit::class, 'unit_type');
     }
+    public function child()
+    {
+        return $this->hasOne(Product::class, 'parent_id');
+    }
+    public function parent()
+    {
+        return $this->belongsTo(Product::class, 'parent_id');
+    }
 }
