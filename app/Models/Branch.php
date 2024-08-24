@@ -50,4 +50,21 @@ class Branch extends Model
     {
         return $this->belongsToMany(User::class, 'user_branch')->withTimestamps();
     }
+    public function sales()
+    {
+        return $this->hasMany(Sale::class);
+    }
+
+    public function cart()
+    {
+        return $this->sales()->where('status', 'cart');
+    }
+    public function cashRegisterOpen()
+    {
+        return $this->hasOne(CashRegister::class)->where('status', 'open');
+    }
+    public function correlatives()
+    {
+        return $this->hasMany(Correlative::class);
+    }
 }

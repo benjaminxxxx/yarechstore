@@ -5,5 +5,7 @@
         </h2>
     </x-slot>
 
-    <livewire:sell/>
+    <div class="h-full">
+        <livewire:sell/>
+    </div>
 </x-app-layout>

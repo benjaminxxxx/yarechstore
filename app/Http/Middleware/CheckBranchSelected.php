@@ -18,11 +18,19 @@ class CheckBranchSelected
     public function handle(Request $request, Closure $next): Response
     {
         $user = Auth::user();
-//dd(Session::has('selected_branch'));
+        //dd(Session::has('selected_branch'));
         // Verifica si el usuario no es super administrador
         if ($user->role_id != 1) {
+            $branches = $user->branches();
+            if($branches){
+                if($branches->count()==1){
+                    $branch = $branches->first();
+                    Session::put('selected_branch', $branch->code);
+                }
+            }
             // Verifica si no hay sucursal seleccionada en la sesión y evita redirección en la ruta de selección de sucursal
             if (!Session::has('selected_branch') && !$request->routeIs('select-branch', 'set-branch')) {
+                
                 return redirect()->route('select-branch');
             }
         }

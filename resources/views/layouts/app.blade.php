@@ -9,17 +9,19 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="generator" content="Hugo 0.88.1">
 
-    <title>{{ $title??'Punto de Venta' }}</title>
+    <title>{{ $title ?? 'Punto de Venta' }}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap"
         rel="stylesheet">
-        <link rel="stylesheet" href="{{asset('css/custom.css')}}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{asset('image/favicon.png')}}">
+    <link rel="stylesheet" href="{{ asset('css/custom.css') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('image/favicon.png') }}">
     <meta name="msapplication-TileColor" content="#ffffff">
     <meta name="theme-color" content="#ffffff">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+        integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <script>
         if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia(
@@ -35,10 +37,13 @@
         input:-webkit-autofill:hover,
         input:-webkit-autofill:focus,
         input:-webkit-autofill:active {
-            -webkit-box-shadow: 0 0 0 30px #f7fafc inset !important; /* Cambia el color de fondo del autocompletado */
+            -webkit-box-shadow: 0 0 0 30px #f7fafc inset !important;
+            /* Cambia el color de fondo del autocompletado */
             box-shadow: 0 0 0 30px #f7fafc inset !important;
-            -webkit-text-fill-color: #2d3748 !important; /* Cambia el color del texto del autocompletado */
-            font-size: 1rem !important; /* Asegúrate de que el tamaño de la fuente sea consistente */
+            -webkit-text-fill-color: #2d3748 !important;
+            /* Cambia el color del texto del autocompletado */
+            font-size: 1rem !important;
+            /* Asegúrate de que el tamaño de la fuente sea consistente */
         }
     </style>
     <!-- Scripts -->
@@ -48,7 +53,7 @@
     @livewireStyles
 </head>
 
-<body x-data="themeSwitcher()"  :class="{ 'dark': switchOn }">
+<body x-data="themeSwitcher()" :class="{ 'dark': switchOn }">
 
 
 
@@ -67,24 +72,23 @@
                         </svg>
                     </button>
                     <a href="https://flowbite.com" class="flex ms-2 md:me-24">
-                        <img src="{{asset('image/logo.svg')}}" alt="" class="h-8">
+                        <img src="{{ asset('image/logo.svg') }}" alt="" class="h-8">
                     </a>
                 </div>
                 <div class="flex items-center">
-                    <div x-data="window.themeSwitcher()" x-init="switchTheme()" @keydown.window.tab="switchOn = false" class="flex items-center justify-center space-x-2">
+                    <div x-data="window.themeSwitcher()" x-init="switchTheme()" @keydown.window.tab="switchOn = false"
+                        class="flex items-center justify-center space-x-2">
                         <input id="thisId" type="checkbox" name="switch" class="hidden" :checked="switchOn">
-                    
-                        <button 
-                            x-ref="switchButton"
-                            type="button" 
-                            @click="switchOn = ! switchOn; switchTheme()"
-                            :class="switchOn ? 'bg-blue-600' : 'bg-neutral-200'" 
+
+                        <button x-ref="switchButton" type="button" @click="switchOn = ! switchOn; switchTheme()"
+                            :class="switchOn ? 'bg-blue-600' : 'bg-neutral-200'"
                             class="relative inline-flex h-6 py-0.5 ml-4 focus:outline-none rounded-full w-10">
-                            <span :class="switchOn ? 'translate-x-[18px]' : 'translate-x-0.5'" class="w-5 h-5 duration-200 ease-in-out bg-white rounded-full shadow-md"></span>
+                            <span :class="switchOn ? 'translate-x-[18px]' : 'translate-x-0.5'"
+                                class="w-5 h-5 duration-200 ease-in-out bg-white rounded-full shadow-md"></span>
                         </button>
-                    
-                        <label @click="$refs.switchButton.click(); $refs.switchButton.focus()" :id="$id('switch')" 
-                            :class="{ 'text-blue-600': switchOn, 'text-gray-400': ! switchOn }"
+
+                        <label @click="$refs.switchButton.click(); $refs.switchButton.focus()" :id="$id('switch')"
+                            :class="{ 'text-blue-600': switchOn, 'text-gray-400': !switchOn }"
                             class="text-sm select-none">
                             Dark Mode
                         </label>
@@ -147,40 +151,42 @@
         </div>
     </nav>
 
-    <aside
-           :class="isOpen ? 'translate-x-0' : '-translate-x-full'"
-           id="logo-sidebar"
-           class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform bg-white border-r border-gray-200 sm:translate-x-0 dark:bg-gray-800 dark:border-gray-700"
-           aria-label="Sidebar">
+    <aside :class="isOpen ? 'translate-x-0' : '-translate-x-full'" id="logo-sidebar"
+        class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform bg-white border-r border-gray-200 sm:translate-x-0 dark:bg-gray-800 dark:border-gray-700"
+        aria-label="Sidebar">
         <div class="h-full px-3 pb-4 overflow-y-auto bg-white dark:bg-gray-800">
             <ul>
-                <x-link href="{{route('dashboard')}}" :active="request()->routeIs('dashboard')">
+                <x-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')">
                     <i class="fa fa-cart-plus"></i>
                     <span class="ms-3">Vender</span>
                 </x-link>
-                <x-link href="{{route('products')}}" :active="request()->routeIs('products')">
+                <x-link href="{{ route('products') }}" :active="request()->routeIs('products')">
                     <i class="fa fa-tools"></i>
                     <span class="ms-3">Productos</span>
                 </x-link>
-                <x-link href="{{route('user')}}" :active="request()->routeIs('user')">
+                <x-link href="{{ route('user') }}" :active="request()->routeIs('user')">
                     <i class="fa fa-users"></i>
                     <span class="ms-3">Usuarios</span>
                 </x-link>
-                <x-link href="{{route('branch')}}" :active="request()->routeIs('branch')">
+                <x-link href="{{ route('branch') }}" :active="request()->routeIs('branch')">
                     <i class="fa fa-building"></i>
                     <span class="ms-3">Sucursales</span>
                 </x-link>
-                <x-link href="{{route('purchases')}}" :active="request()->routeIs('purchases')">
+                <x-link href="{{ route('purchases') }}" :active="request()->routeIs('purchases')">
                     <i class="fa fa-file-invoice"></i>
                     <span class="ms-3">Compras</span>
                 </x-link>
-                <x-link href="{{route('inventory')}}" :active="request()->routeIs('inventory')">
+                <x-link href="{{ route('inventory') }}" :active="request()->routeIs('inventory')">
                     <i class="fa fa-boxes"></i>
                     <span class="ms-3">Inventario</span>
                 </x-link>
-                <x-link href="{{route('config.units')}}" :active="request()->routeIs('config.units')">
+                <x-link href="{{ route('config.units') }}" :active="request()->routeIs('config.units')">
                     <i class="fa fa-box"></i>
                     <span class="ms-3">Unidades</span>
+                </x-link>
+                <x-link href="{{ route('config.correlatives') }}" :active="request()->routeIs('config.correlatives')">
+                    <i class="fa fa-list-ol"></i>
+                    <span class="ms-3">Correlatives</span>
                 </x-link>
             </ul>
         </div>
@@ -196,6 +202,9 @@
     @stack('modals')
 
     @livewireScripts
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <x-livewire-alert::scripts />
 </body>
 
 </html>

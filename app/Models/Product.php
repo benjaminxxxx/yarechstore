@@ -51,6 +51,10 @@ class Product extends Model
     {
         return $this->hasMany(Inventory::class);
     }
+    public function inventory()
+    {
+        return $this->hasOne(Inventory::class);
+    }
     public function unit()
     {
         return $this->belongsTo(Unit::class, 'unit_type');

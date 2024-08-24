@@ -6,13 +6,20 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "barryvdh/laravel-dompdf": "^3.0",
+        "greenter/lite": "^5.1",
+        "greenter/report": "^5.0",
+        "greenter/xml": "^5.1",
         "intervention/image": "^3.7",
         "intervention/image-laravel": "^1.3",
+        "jantinnerezo/livewire-alert": "^3.0",
         "laravel/framework": "^11.9",
         "laravel/jetstream": "^5.1",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
-        "livewire/livewire": "^3.0"
+        "livewire/livewire": "^3.0",
+        "luecano/numero-a-letras": "^3.0",
+        "twig/twig": "^3.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
