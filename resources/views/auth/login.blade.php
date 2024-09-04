@@ -11,19 +11,19 @@
                 </div>
             </div>
             <!-- Right Panel -->
-            <div class="w-full md:w-2/5 p-8 flex items-center justify-center h-full" style="background:#F3F7FF">
+            <div class="w-full md:w-2/5 p-8 flex items-center justify-center h-full bg-primary">
                 <div class="max-w-80 w-full">
                     <x-validation-errors class="mb-4" />
 
                     @session('status')
-                        <div class="mb-4 font-medium text-sm text-green-600 dark:text-green-400">
+                        <div class="mb-4 font-medium text-sm text-secondaryText">
                             {{ $value }}
                         </div>
                     @endsession
                     <div class="md:hidden mb-10">
                         <img src="{{ asset('image/logo.svg') }}" alt="Logo" class="h-7">
                     </div>
-                    <h1 class="hidden md:block mb-10 font-bold text-2xl text-indigo-600">Vamos a iniciar!</h1>
+                    <h1 class="hidden md:block mb-10 font-bold text-2xl text-secondaryText">Vamos a iniciar!</h1>
                     <form method="POST" action="{{ route('login') }}">
                         @csrf
 
@@ -41,23 +41,23 @@
                             <label for="remember_me" class="flex items-center">
                                 <x-checkbox id="remember_me" name="remember" />
                                 <span
-                                    class="ms-2 text-sm text-gray-600 dark:text-gray-400">Recordar sesión</span>
+                                    class="ms-2 text-sm text-secondaryText">Recordar sesión</span>
                             </label>
                         </div>
 
                         <div class="">
 
 
-                            <x-button class="w-full justify-center">
-                                {{ __('Log in') }}
-                            </x-button>
+                            <x-secondary-button type="submit" class="w-full justify-center">
+                                INGRESAR
+                            </x-secondary-button>
                         </div>
 
                         <div>
                             @if (Route::has('password.request'))
-                                <a class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
+                                <a class="underline text-sm text-secondaryText hover:text-secondaryText rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary dark:focus:ring-offset-gray-800"
                                     href="{{ route('password.request') }}">
-                                    {{ __('Forgot your password?') }}
+                                    ¿Olvidó su contraseña?
                                 </a>
                             @endif
                         </div>

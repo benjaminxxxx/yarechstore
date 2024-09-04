@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
 use GuzzleHttp\Client;
 use App\Models\Customer;
@@ -13,6 +14,7 @@ use Illuminate\Validation\Rule;
 
 class CartClient extends Component
 {
+    use LivewireAlert;
     public $saleCode;
     public $isFormOpen = false;
     public $searchCustomer;
@@ -96,13 +98,13 @@ class CartClient extends Component
             // Para los teléfonos, si es necesario convertirlos a una cadena o lista
             $this->phone = implode(', ', $data['telefonos']) ?? null;
 
-            return session()->flash('message', 'Datos obtenidos con exito');
+            return $this->alert('success', 'Datos obtenidos con exito');
             /*
             {"ruc":"10776858507","razonSocial":"QUISPE RAMOS BENJAMIN ELEODORO","nombreComercial":"-\r\n\t\t\t\t\t              \r\n\t\t\t\t\t              \t\r\n\t\t\t\t\t                Afecto al Nuevo RUS: SI","telefonos":[],"tipo":"PERSONA NATURAL CON NEGOCIO","estado":"ACTIVO","condicion":"HABIDO","direccion":"-","departamento":null,"provincia":null,"distrito":null,"fechaInscripcion":"2015-02-27T00:00:00.000Z","sistEmsion":"MANUAL","sistContabilidad":"MANUAL","actExterior":"SIN ACTIVIDAD","actEconomicas":["Principal    - 4789 - VENTA AL POR MENOR DE OTROS PRODUCTOS EN PUESTOS DE VENTA Y MERCADOS","Secundaria 1 - 9609  - OTRAS ACTIVIDADES DE SERVICIOS PERSONALES N.C.P."],"cpPago":["BOLETA DE VENTA"],"sistElectronica":["RECIBOS POR HONORARIOS     AFILIADO DESDE 28\/02\/2015"],"fechaEmisorFe":"2015-02-28T00:00:00.000Z","cpeElectronico":["RECIBO POR HONORARIO (desde 28\/02\/2015)"],"fechaPle":null,"padrones":["NINGUNO"],"fechaBaja":null,"profesion":""}
             */
         } catch (\GuzzleHttp\Exception\RequestException $e) {
             // Manejar errores de solicitud aquí
-            return session()->flash('error', 'Error en la solicitud');
+            return $this->alert('error', 'Error en la solicitud');
         }
     }
     public function store()
@@ -141,9 +143,9 @@ class CartClient extends Component
                         'commercial_name' => $this->commercial_name,
                     ]);
         
-                    session()->flash('message', 'Cliente actualizado exitosamente.');
+                    return $this->alert('success', 'Cliente actualizado exitosamente.');
                 } else {
-                    session()->flash('error', 'El cliente ya no existe.');
+                    return $this->alert('error', 'El cliente ya no existe.');
                 }
             }else{
                 $customer = Customer::create([
@@ -159,7 +161,7 @@ class CartClient extends Component
                     'commercial_name' => $this->commercial_name,
                 ]);
 
-                session()->flash('message', 'Datos registrados con éxito');
+                return $this->alert('success', 'Datos registrados con éxito');
             }
             
 
@@ -174,7 +176,7 @@ class CartClient extends Component
             $this->resetForm();
         } catch (QueryException $e) {
             // Manejar el error y establecer mensaje de error
-            session()->flash('error', 'Error en la solicitud: ' . $e->getMessage());
+            return $this->alert('error', 'Error en la solicitud: ' . $e->getMessage());
         }
     }
     public function createNewCostumer(){
@@ -230,7 +232,7 @@ class CartClient extends Component
             $this->phone = $customer->phone;
             $this->commercial_name = $customer->commercial_name;
         }else{
-            session()->flash('error', 'El cliente ya no existe');
+            return $this->alert('error', 'El cliente ya no existe');
         }
     }
     public function mount(){

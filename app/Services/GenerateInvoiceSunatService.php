@@ -9,6 +9,9 @@ use App\Models\PaymentMethod;
 use App\Models\DigitalTransaction;
 use App\Models\Correlative;
 use App\Services\SunatService;
+use DateTime;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 use Illuminate\Support\Facades\Storage;
 use Luecano\NumeroALetras\NumeroALetras;
 use Greenter\Report\XmlUtils;
@@ -50,27 +53,21 @@ class GenerateInvoiceSunatService
 
             // Si se encuentra un prefijo válido, añadir la numeración
             if ($text_document !== 'RECIBO DE VENTA') {
-                $numerocorrelativo = str_pad($this->sale->document_correlative, 5, '0', STR_PAD_LEFT);
+                $numerocorrelativo = str_pad($this->sale->document_correlative, 8, '0', STR_PAD_LEFT);
                 $text_document .= " {$this->sale->document_code} - {$numerocorrelativo}";
             }
         }
 
         return $text_document;
     }
-    public function createSimpleVoucher()
+
+    public function createSimpleVoucher($dataClient,$filename = null)
     {
 
         $itemsFromSale = $this->sale->items;
         $items = [];
 
         foreach ($itemsFromSale as $item) {
-
-            $subtotal = $item->subtotal;
-            $igv = $item->igv; // Puedes calcularlo si es necesario: $subtotal * 0.18;
-
-            // Calcular el total basado en el subtotal y el IGV
-            $total = $subtotal + $igv;
-
             // Agregar el ítem al array de items con el formato deseado
             $items[] = [
                 'code' => sprintf('P%03d', $item->product_id), // Generar código basado en el ID del producto
@@ -80,7 +77,7 @@ class GenerateInvoiceSunatService
                 'discount' => 0.00, // No hay descuento según los datos proporcionados
                 'subtotal' => (float) $item->subtotal, // Subtotal del producto
                 'igv' => (float) $item->igv, // IGV del producto
-                'total' => (float) $total, // Total del producto
+                'total' => (float) $item->total_price, // Total del producto
             ];
         }
 
@@ -97,6 +94,7 @@ class GenerateInvoiceSunatService
             'total_amount' => $this->sale->total_amount,
             'total_pagado' => $this->getTotalPagado($this->sale->id),
             'vuelto' => $this->sale->cash,
+            'client'=>$dataClient
         ];
 
 
@@ -108,7 +106,11 @@ class GenerateInvoiceSunatService
         $pdf->setPaper([0, 0, $width, $height], 'portrait');
 
 
-        $filename = $this->getFileName();
+        if (!$filename) {
+            $filename = $this->getFileName();
+        } else {
+            $filename = Carbon::now()->format('Y/m') . '/' . $filename . '.pdf';
+        }
 
         Storage::disk('public')->put($filename, $pdf->output());
         $document_path = Storage::disk('public')->url($filename);
@@ -117,7 +119,7 @@ class GenerateInvoiceSunatService
     }
     public function getFileName()
     {
-        $idFormatted = 'V' . str_pad($this->sale->id, 5, '0', STR_PAD_LEFT);
+        $idFormatted = 'V' . str_pad($this->sale->id, 8, '0', STR_PAD_LEFT);
 
         // Formato de fecha: YYYY/MM
         $filename = Carbon::now()->format('Y/m') . '/';
@@ -189,10 +191,13 @@ class GenerateInvoiceSunatService
 
         $response = [];
         $this->sale = $sale;
+        $this->invoiceType = InvoicesType::find($this->sale->invoice_type_id);
 
         $this->generateNextCorrelative();
 
-        $fechaEmision = date('Y-m-d\TH:i:sP');
+        $date = new DateTime('now', new \DateTimeZone('America/Lima'));
+        $fechaEmision = $date->format('Y-m-d\TH:i:sP');
+
 
         $details = [];
         $itemsFromSale = $this->sale->items;
@@ -223,7 +228,6 @@ class GenerateInvoiceSunatService
                 "mtoPrecioUnitario" => $mtoPrecioUnitario // Monto del precio unitario con IGV
             ];
         }
-
 
         if ($this->invoiceType) {
             /*
@@ -290,6 +294,7 @@ class GenerateInvoiceSunatService
                 ]
             ];
 */
+            $this->typeDocument = $this->invoiceType->code;
 
             $data = [
                 "ublVersion" => "2.1",
@@ -320,9 +325,9 @@ class GenerateInvoiceSunatService
                 ],
 
                 "client" => [
-                    "tipoDoc" => '03',
+                    "tipoDoc" => '1',
                     "numDoc" => '00000000',
-                    "rznSocial" => 'Cliente Varios'
+                    "rznSocial" => 'VARIOS'
                 ],
 
                 "mtoOperGravadas" => (float) $this->sale->subtotal,
@@ -424,14 +429,15 @@ class GenerateInvoiceSunatService
 
             $response['sunatResponse'] = $sunat->sunatResponse($result);
 
+            $htmlInvoice = $sunat->getHtmlReport($invoice);
+
+            $this->htmlToPdf($htmlInvoice,$invoice->getName());
 
             $documentCorrelative = str_pad($this->sale->document_correlative, 6, '0', STR_PAD_LEFT);
-            $prenombreDocumento = $this->sale->customer_document . '-' . $this->sale->document_code . '-' . $documentCorrelative;
 
             if (isset($response['xml'])) {
 
-                $idFormatted = 'XML_' . $prenombreDocumento;
-                $signed_xml_filename = Carbon::now()->format('Y/m') . '/' . $idFormatted . '.xml';
+                $signed_xml_filename = Carbon::now()->format('Y/m') . '/' . $invoice->getName() . '.xml';
 
                 Storage::disk('public')->put($signed_xml_filename, $response['xml']);
                 $this->sale->signed_xml_path = $signed_xml_filename;
@@ -440,8 +446,7 @@ class GenerateInvoiceSunatService
 
             if (isset($response['sunatResponse']['cdrZip'])) {
 
-                $idFormatted = 'CDR_' . $prenombreDocumento;
-                $filename = Carbon::now()->format('Y/m') . '/' . $idFormatted . '.zip';
+                $filename = Carbon::now()->format('Y/m') . '/' . $invoice->getName() . '.zip';
 
                 Storage::disk('public')->put($filename, base64_decode($response['sunatResponse']['cdrZip']));
                 $this->sale->cdr_path = $filename;
@@ -449,13 +454,57 @@ class GenerateInvoiceSunatService
             }
 
             if ($response['sunatResponse']['success'] == true) {
-                $this->createSimpleVoucher();
+                $this->sale->emision_date = Carbon::now()->format('Y/m/d');
+                if($this->sale->status=='paid'){
+                    $this->sale->pay_date  = Carbon::now()->format('Y/m/d');
+                }
+                $this->sale->save();
+                
+                $this->createSimpleVoucher($data['client'],$invoice->getName());
+            }else{
+                $this->createSimpleVoucher($data['client']);
             }
         } else {
-            $this->createSimpleVoucher();
+            $data = [
+                "client" => [
+                    "tipoDoc" => '1',
+                    "numDoc" => '00000000',
+                    "rznSocial" => 'VARIOS'
+                ]
+            ];
+            $this->createSimpleVoucher($data['client']);
         }
 
+
         return $response;
+    }
+    public function htmlToPdf($html,$invoiceName){
+
+        // Configura Dompdf
+        $options = new Options();
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('isRemoteEnabled', true);
+
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($html);
+
+        // Configura el tamaño de papel y la orientación
+        $dompdf->setPaper('A4', 'portrait');
+
+        // Renderiza el PDF
+        $dompdf->render();
+
+        // Obtén el contenido del PDF
+        $output = $dompdf->output();
+
+        // Genera la ruta para almacenar el archivo
+        $filePath = date('Y/m') . '/' . $invoiceName . '_oficial.pdf';
+
+        // Guarda el archivo en el disco público
+        Storage::disk('public')->put($filePath, $output);
+
+        // Retorna la URL del archivo guardado
+        return Storage::disk('public')->url($filePath);
     }
     public function setTotales(&$data)
     {

@@ -131,6 +131,9 @@
             <tr>
                 <td>Fecha de Emisión: {{$date}}</td>
             </tr>
+            <tr>
+                <td>Cliente: {{$client['numDoc']}} - {{$client['rznSocial']}}</td>
+            </tr>
         </table>
         <div class="line"></div>
         <table style="width:100%" cellspacing="5">

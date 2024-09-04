@@ -29,11 +29,11 @@
                 </div>
 
                 <div class="relative">
-                    <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none text-indigo-700">
+                    <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none text-primary">
                         <i class="fa fa-search"></i>
                     </div>
                     <input type="search" wire:model.live="searchProduct"
-                        class="block w-full p-3 bg-white ps-10 text-sm text-gray-800 border-0 rounded-2xl focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-indigo-500 dark:focus:border-indigo-500"
+                        class="block w-full p-3 bg-white ps-10 text-sm text-gray-800 border-0 rounded-2xl focus:ring-primary"
                         placeholder="Busca tus productos aquí" required />
 
                 </div>
@@ -43,8 +43,16 @@
                 <div class="grid grid-cols-12 gap-10">
                     @if ($resultsProduct && $resultsProduct->count() > 0)
                         @foreach ($resultsProduct as $item)
+                            
+
+                            @if ($item->presentations && $item->presentations->count() > 0)
+                                <!-- Mostrar presentaciones disponibles -->
+                                <x-product-card-presentation :photoUrl="$item->photo_url" :name="$item->name" :finalPrice="$item->final_price"
+                                    :presentations="$item->presentations" :code="$item->code" />
+                            @else
                             <x-product-card wire:click="addToCart('{{ $item->code }}')" :photoUrl="$item->photo_url"
                                 :name="$item->name" :finalPrice="$item->final_price" />
+                            @endif
                         @endforeach
                     @endif
                 </div>
@@ -61,7 +69,7 @@
                             <i class="fa fa-chevron-left"></i>
                         </x-button>
                     @endif
-                    <div class="bg-indigo-600 w-full text-white py-3 px-4 shadow-lg rounded-lg font-bold">
+                    <div class="bg-primary w-full text-white py-3 px-4 shadow-lg rounded-lg font-bold">
                         Compra N°{{ $currentSale->id ?? 'N/A' }}
                     </div>
                     @if ($showPrevButton)
@@ -205,11 +213,22 @@
                                     href="{{ asset('uploads/' . $currentSale->document_path) }}">
                                     {{ $buttonLabel }}
                                 </x-button-a>
+
+                                @php
+                                    // Ruta del archivo original
+                                    $originalFilePath = 'uploads/' . $currentSale->document_path;
+
+                                    // Ruta del archivo oficial
+                                    $officialFilePath = 'uploads/' . str_replace('.pdf', '_oficial.pdf', $currentSale->document_path);
+                                @endphp
+
+                                @if (file_exists(public_path($officialFilePath)))
+                                    <x-button-a target="_blank"
+                                        href="{{ asset($officialFilePath) }}">
+                                        {{ $buttonLabel }} A4
+                                    </x-button-a>
+                                @endif
                             @endif
-                        @else
-                            <x-button>
-                                Generar Voucher
-                            </x-button>
                         @endif
                     @endif
 

@@ -2,12 +2,14 @@
 
 namespace App\Livewire;
 
+use App\Models\CashTransaction;
+use App\Models\Product;
+use App\Models\ProductStock;
+use App\Models\Unit;
 use Livewire\Component;
-use App\Models\Customer;
 use App\Models\Branch;
 use App\Models\Sale;
 use App\Models\SaleItem;
-use App\Models\Inventory;
 use Illuminate\Support\Str;
 use Illuminate\Database\QueryException;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
@@ -40,6 +42,9 @@ class Sell extends Component
             $this->branch = Branch::where('code', $this->branchCode)->first();
             $this->reCart();
         }
+    }
+    public function generateInvoice(){
+        dd($this->currentSale);
     }
     public function reCart()
     {
@@ -74,7 +79,7 @@ class Sell extends Component
     public function updatedSearchProduct()
     {
         if ($this->branch) {
-            $this->resultsProduct = $this->branch->products()
+            /*$this->resultsProduct = $this->branch->products()
                 ->where(function ($query) {
                     $query->where('name', 'like', '%' . $this->searchProduct . '%')
                         ->orWhere('description', 'like', '%' . $this->searchProduct . '%');
@@ -84,6 +89,11 @@ class Sell extends Component
                 })
                 ->with('inventories')
                 ->get();
+                */
+            $this->resultsProduct = Product::where(function ($query) {
+                $query->where('name', 'like', '%' . $this->searchProduct . '%')
+                    ->orWhere('description', 'like', '%' . $this->searchProduct . '%');
+            })->get();
         }
     }
     public function addCart()
@@ -116,11 +126,22 @@ class Sell extends Component
             Session::flash('error', 'Hubo un error al agregar la venta. Por favor, inténtelo nuevamente:' . $e->getMessage());
         }
     }
-    public function addToCart($code)
+    public function addToCart($code, $unit = 1, $factor = 1, $price_in_factor = null)
     {
         $product = $this->getProduct($code);
         if (!$product)
-            return;
+            return $this->alert('error', 'El producto ya no existe');
+
+        $stockInBranch = $product->stocks->where('branch_id', $this->branch->id)->where('stock', '>', 0)->first();
+
+        if (!$stockInBranch) {
+
+            $stockInOtherBranches = $product->stocks->where('stock', '>', 0)->where('branch_id', '!=', $this->branch->id);
+            if ($stockInOtherBranches->count() > 0) {
+                return $this->alert('error', 'Hay Stock en otras Sucursales');
+            }
+            return $this->alert('error', 'No hay Stock del producto');
+        }
 
         if (!$this->currentSale || $this->currentSale->status != 'cart') {
             $this->addCart();
@@ -128,27 +149,58 @@ class Sell extends Component
 
         if ($this->currentSale) {
 
-            $existingItem = $this->currentSale->items()->where('product_id', $product->id)->first();
+            // Obtener todos los ítems en el carrito para este producto (sin importar la unidad)
+            $itemsInCart = $this->currentSale->items()->where('product_id', $product->id)->get();
+
+            // Sumar la cantidad total de este producto en el carrito, considerando el factor de cada ítem
+            $currentTotalQuantityInCart = $itemsInCart->sum(function ($item) {
+                return $item->quantity * $item->factor;
+            });
+
+            // Calcular la cantidad total requerida con la nueva adición
+            $totalRequiredQuantity = $currentTotalQuantityInCart + ($factor * 1);
+
+            // Validar si la cantidad total requerida supera el stock disponible
+            if ($totalRequiredQuantity > $stockInBranch->stock) {
+                return $this->alert('error', 'La cantidad de productos que hay en el empaque supera el stock disponible');
+            }
+
+
+            $existingItem = $this->currentSale->items()->where('product_id', $product->id)->where('unit', $unit)->first();
+
+            $final_price = $price_in_factor ? $price_in_factor : $product->final_price;
 
             if ($existingItem) {
                 $this->addQuantityToCart($existingItem->id);
             } else {
                 // Si el producto no está en el carrito, lo agregamos como un nuevo item
+                $igv_percent = $product->igv==1?18:0;
+                list($subtotal, $totalIGV) = $this->calculateSubtotalAndIGV($final_price, $igv_percent, 1);
 
-                list($subtotal, $totalIGV) = $this->calculateSubtotalAndIGV($product->final_price, $product->igv, 1);
+                $sufix = '';
+                if ($unit != 1) {
+                    $namesufix = Unit::find($unit);
+                    if ($namesufix) {
+                        $sufix = ' ' . $namesufix->name . ' x' . $factor;
+                    }
+                }
+
+                $product_name = $product->name . $sufix;
 
                 $newItem = $this->currentSale->items()->create([
                     'product_id' => $product->id,
-                    'product_name' => $product->name,
-                    'product_price' => $product->final_price,
+                    'product_name' => $product_name,
+                    'product_price' => $final_price,
                     // Calcular el subtotal sin IGV
                     'subtotal' => $subtotal,
-                    'unit_value' => (float) $product->igv == 2 ? $product->final_price : $product->final_price / 1.18,
+                    'unit_value' => (float) $product->igv == 2 ? $final_price : $final_price / 1.18,
                     'total_taxes' => (float) $totalIGV,
                     'percent_igv' => (float) ($product->igv == 2 ? 0 : 18),
                     'igv' => $totalIGV,
                     'quantity' => 1,
-                    'total_price' => $product->final_price,
+                    'total_price' => $final_price,
+                    'unit' => $unit,
+                    'factor' => $factor,
                 ]);
 
                 // Agregar el nuevo ítem al array de cantidades
@@ -168,7 +220,7 @@ class Sell extends Component
                 $item->quantity -= 1;
                 $item->total_price = $item->product_price * $item->quantity;
 
-                list($subtotal, $totalIGV) = $this->calculateSubtotalAndIGV($item->product_price, $item->product_price, $item->quantity);
+                list($subtotal, $totalIGV) = $this->calculateSubtotalAndIGV($item->product_price, $item->percent_igv, $item->quantity);
 
                 $item->total_price = $item->product_price * $item->quantity;
                 $item->subtotal = $subtotal;
@@ -187,22 +239,59 @@ class Sell extends Component
 
     public function addQuantityToCart($itemId)
     {
-        $item = $this->currentSale->items()->find($itemId);
-        if ($item) {
-            $inventory = Inventory::where('product_id', $item->product_id)->first();
-            $stockAvailable = $inventory ? $inventory->stock : null;
+        /* $item = $this->currentSale->items()->find($itemId);
+         if ($item) {
+             $inventory = Inventory::where('product_id', $item->product_id)->first();
+             $stockAvailable = $inventory ? $inventory->stock : null;
 
-            if (is_null($stockAvailable) || $stockAvailable > $item->quantity) {
+             if (is_null($stockAvailable) || $stockAvailable > $item->quantity) {
+                 $item->quantity += 1;
+
+                 list($subtotal, $totalIGV) = $this->calculateSubtotalAndIGV($item->product_price, $item->product_price, $item->quantity);
+                 $item->total_price = $item->product_price * $item->quantity;
+                 $item->subtotal = $subtotal;
+                 $item->igv = $totalIGV;
+                 $item->total_taxes = $totalIGV;
+                 $item->save();
+                 $this->quantities[$itemId] = $item->quantity;
+                 $this->updateSaleTotal();
+             }
+         }*/
+        $item = $this->currentSale->items()->find($itemId);
+
+        if ($item) {
+            // Obtener el producto
+            $product = $item->product;
+
+            $itemsInCart = $this->currentSale->items()->where('product_id', $item->product_id)->get();
+            $currentTotalQuantityInCart = $itemsInCart->sum(function ($item) {
+                return $item->quantity * $item->factor;
+            });
+
+            // Obtener el stock del producto en la sucursal actual
+            $stockInBranch = $product->stocks->where('branch_id', $this->branch->id)->first();
+
+            // Verificar si el stock está disponible
+            $stockAvailable = $stockInBranch ? $stockInBranch->stock : 0;
+            $totalRequiredQuantity = $currentTotalQuantityInCart + ($item->factor * 1);
+
+
+            // Verificar si hay suficiente stock para agregar al carrito
+            if ($stockAvailable > $totalRequiredQuantity) {
                 $item->quantity += 1;
 
-                list($subtotal, $totalIGV) = $this->calculateSubtotalAndIGV($item->product_price, $item->product_price, $item->quantity);
+                list($subtotal, $totalIGV) = $this->calculateSubtotalAndIGV($item->product_price, $item->percent_igv, $item->quantity);
+              
                 $item->total_price = $item->product_price * $item->quantity;
                 $item->subtotal = $subtotal;
                 $item->igv = $totalIGV;
                 $item->total_taxes = $totalIGV;
                 $item->save();
+
                 $this->quantities[$itemId] = $item->quantity;
                 $this->updateSaleTotal();
+            } else {
+                $this->alert('error', 'No hay suficiente stock disponible en la sucursal actual.');
             }
         }
     }
@@ -233,11 +322,11 @@ class Sell extends Component
             $this->updateSaleTotal();
         }
     }
-    private function calculateSubtotalAndIGV($price, $igv, $quantity)
+    private function calculateSubtotalAndIGV($price, $igv_percent, $quantity)
     {
-        $igvRate = 0.18; // Tasa de IGV para operaciones gravadas
+        $igvRate = $igv_percent/100; // Tasa de IGV para operaciones gravadas
 
-        if ($igv == 1) { // Si es gravado con IGV
+        if ($igv_percent > 0) { // Si es gravado con IGV
             // Calcular el precio sin IGV
             $priceWithoutIGV = round($price / (1 + $igvRate), 2);
 
@@ -261,7 +350,9 @@ class Sell extends Component
         });
 
         $subtotalwithoutigv = $this->currentSale->items->sum(function ($item) {
-            return ($item->percent_igv == 0) ? 0 : ($item->product_price / 1.18);
+            // Calcular el precio sin IGV basado en el porcentaje de IGV del producto
+            $percentage_factor = 1 + ($item->percent_igv / 100);
+            return ($item->percent_igv == 0) ? $item->product_price * $item->quantity : ($item->product_price / $percentage_factor) * $item->quantity;
         });
 
         $this->currentSale->update([
@@ -296,7 +387,7 @@ class Sell extends Component
         $product = null;
 
         if ($this->branch) {
-            $product = $this->branch->products()->where('code', $code)->first();
+            $product = Product::where('code', $code)->first();
         }
 
         return $product;
@@ -332,12 +423,13 @@ class Sell extends Component
             'position' => 'center',
             'toast' => false,
             'timer' => null,
-            'confirmButtonColor' => '#4F46E5', // Esto sobrescribiría la configuración global
+            'confirmButtonColor' => '#F5922A', // Esto sobrescribiría la configuración global
             'cancelButtonColor' => '#2C2C2C',
         ]);
     }
     public function anularVenta()
     {
+     
         if (!$this->codigoVenta) {
             return;
         }
@@ -348,35 +440,49 @@ class Sell extends Component
                 // Buscar la venta por su código
                 $sale = Sale::where('code', $this->codigoVenta)->where('status', 'paid')->first();
                 $branch = $this->branch;
-             
 
                 if ($sale && $branch) {
                     // Cambiar el estado de la venta a 'canceled'
                     $sale->status = 'canceled';
                     $sale->save(); // Guarda el estado de la venta
 
-                    // Restablecer el stock en el inventario
+                    $cashRegister = $this->branch->cashRegisterOpen;
+                    if ($cashRegister) {
+                        CashTransaction::create([
+                            'cash_register_id' => $cashRegister->id,
+                            'amount' => $sale->total_amount,
+                            'sale_id' => $sale->id,
+                            'type' => 'refund', 
+                            'description' => 'Venta anulada',
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+
+                    // Restablecer el stock en product_stocks
                     foreach ($sale->items as $item) {
                         $product = $item->product;
-                        $inventory = $product->inventory;
 
-                        if ($inventory) {
-                            $inventory->stock += $item->quantity;
-                            $inventory->save(); // Guarda el nuevo stock
+                        // Obtener el stock del producto en la sucursal actual
+                        $stockInBranch = $product->stocks()->where('branch_id', $branch->id)->first();
+
+                        if ($stockInBranch) {
+                            // Actualizar el stock existente
+                            $stockInBranch->stock += $item->quantity * $item->factor;
+                            $stockInBranch->save(); // Guarda el nuevo stock
                         } else {
-                            // Crear un nuevo registro de inventario si no existe
-                            Inventory::create([
+                            // Crear un nuevo registro de stock si no existe
+                            ProductStock::create([
                                 'branch_id' => $branch->id,
                                 'product_id' => $product->id,
-                                'stock' => $item->quantity,
+                                'stock' => $item->quantity * $item->factor,
                                 'minimum_stock' => 0,
-                                'location' => null,
-                                'expiry_date' => null,
+                                'price' => $product->price, // Asignar el precio del producto si es necesario
                             ]);
                         }
                     }
 
-                    $this->alert('success', 'Venta Anulada con Exito');
+                    $this->alert('success', 'Venta Anulada con Éxito');
                     $this->reCart();
                 } else {
                     // Opcional: Mensaje si no se encuentra la venta

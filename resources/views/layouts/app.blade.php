@@ -60,39 +60,11 @@
     <nav class="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
         <div class="px-3 py-3 lg:px-5 lg:pl-3">
             <div class="flex items-center justify-between">
-                <div class="flex items-center justify-start rtl:justify-end">
-                    <button @click="isOpen = !isOpen" type="button"
-                        class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
-                        <span class="sr-only">Open sidebar</span>
-                        <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path clip-rule="evenodd" fill-rule="evenodd"
-                                d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z">
-                            </path>
-                        </svg>
-                    </button>
-                    <a href="https://flowbite.com" class="flex ms-2 md:me-24">
-                        <img src="{{ asset('image/logo.svg') }}" alt="" class="h-8">
-                    </a>
+                <div class="flex items-center justify-start rtl:justify-end w-64">
+
                 </div>
                 <div class="flex items-center">
-                    <div x-data="window.themeSwitcher()" x-init="switchTheme()" @keydown.window.tab="switchOn = false"
-                        class="flex items-center justify-center space-x-2">
-                        <input id="thisId" type="checkbox" name="switch" class="hidden" :checked="switchOn">
 
-                        <button x-ref="switchButton" type="button" @click="switchOn = ! switchOn; switchTheme()"
-                            :class="switchOn ? 'bg-blue-600' : 'bg-neutral-200'"
-                            class="relative inline-flex h-6 py-0.5 ml-4 focus:outline-none rounded-full w-10">
-                            <span :class="switchOn ? 'translate-x-[18px]' : 'translate-x-0.5'"
-                                class="w-5 h-5 duration-200 ease-in-out bg-white rounded-full shadow-md"></span>
-                        </button>
-
-                        <label @click="$refs.switchButton.click(); $refs.switchButton.focus()" :id="$id('switch')"
-                            :class="{ 'text-blue-600': switchOn, 'text-gray-400': !switchOn }"
-                            class="text-sm select-none">
-                            Dark Mode
-                        </label>
-                    </div>
                     <x-dropdown align="right" width="48">
                         <x-slot name="trigger">
                             @if (Laravel\Jetstream\Jetstream::managesProfilePhotos())
@@ -120,11 +92,11 @@
                         <x-slot name="content">
                             <!-- Account Management -->
                             <div class="block px-4 py-2 text-xs text-gray-400">
-                                {{ __('Manage Account') }}
+                                Administrar Cuenta
                             </div>
 
                             <x-dropdown-link href="{{ route('profile.show') }}">
-                                {{ __('Profile') }}
+                                Perfil
                             </x-dropdown-link>
 
                             @if (Laravel\Jetstream\Jetstream::hasApiFeatures())
@@ -140,7 +112,7 @@
                                 @csrf
 
                                 <x-dropdown-link href="{{ route('logout') }}" @click.prevent="$root.submit();">
-                                    {{ __('Log Out') }}
+                                    Salir
                                 </x-dropdown-link>
                             </form>
                         </x-slot>
@@ -152,41 +124,81 @@
     </nav>
 
     <aside :class="isOpen ? 'translate-x-0' : '-translate-x-full'" id="logo-sidebar"
-        class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform bg-white border-r border-gray-200 sm:translate-x-0 dark:bg-gray-800 dark:border-gray-700"
-        aria-label="Sidebar">
-        <div class="h-full px-3 pb-4 overflow-y-auto bg-white dark:bg-gray-800">
+        class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform bg-primary border-r border-gray-200 sm:translate-x-0 dark:bg-gray-800 dark:border-gray-700"
+        aria-label="Sidebar" style="z-index: 99">
+        <div class="h-full px-3 pb-4 overflow-y-auto">
+            <div class="my-10">
+                <button @click="isOpen = !isOpen" type="button"
+                    class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
+                    <span class="sr-only">Open sidebar</span>
+                    <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path clip-rule="evenodd" fill-rule="evenodd"
+                            d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z">
+                        </path>
+                    </svg>
+                </button>
+                <a href="{{ route('dashboard') }}" class="flex w-full justify-center">
+                    <img src="{{ asset('image/logo-contrast.svg') }}" alt="" class="max-h-12 w-full">
+                </a>
+            </div>
             <ul>
                 <x-link href="{{ route('dashboard') }}" :active="request()->routeIs('dashboard')">
-                    <i class="fa fa-cart-plus"></i>
+                    <div class="w-6">
+                        <i class="fa fa-cart-plus"></i>
+                    </div>
                     <span class="ms-3">Vender</span>
                 </x-link>
+                <x-link href="{{ route('sales') }}" :active="request()->routeIs('sales')">
+
+                    <div class="w-6">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <span class="ms-3">Ventas</span>
+                </x-link>
                 <x-link href="{{ route('products') }}" :active="request()->routeIs('products')">
-                    <i class="fa fa-tools"></i>
+
+                    <div class="w-6">
+                        <i class="fa fa-tools"></i>
+                    </div>
                     <span class="ms-3">Productos</span>
                 </x-link>
                 <x-link href="{{ route('user') }}" :active="request()->routeIs('user')">
-                    <i class="fa fa-users"></i>
+                    <div class="w-6">
+                        <i class="fa fa-users"></i>
+                    </div>
                     <span class="ms-3">Usuarios</span>
                 </x-link>
                 <x-link href="{{ route('branch') }}" :active="request()->routeIs('branch')">
-                    <i class="fa fa-building"></i>
+                    <div class="w-6">
+                        <i class="fa fa-building"></i>
+                    </div>
                     <span class="ms-3">Sucursales</span>
                 </x-link>
                 <x-link href="{{ route('purchases') }}" :active="request()->routeIs('purchases')">
-                    <i class="fa fa-file-invoice"></i>
+                    <div class="w-6">
+                        <i class="fa fa-file-invoice"></i>
+                    </div>
                     <span class="ms-3">Compras</span>
                 </x-link>
-                <x-link href="{{ route('inventory') }}" :active="request()->routeIs('inventory')">
-                    <i class="fa fa-boxes"></i>
-                    <span class="ms-3">Inventario</span>
-                </x-link>
+
                 <x-link href="{{ route('config.units') }}" :active="request()->routeIs('config.units')">
-                    <i class="fa fa-box"></i>
+                    <div class="w-6">
+                        <i class="fa fa-box"></i>
+                    </div>
                     <span class="ms-3">Unidades</span>
                 </x-link>
                 <x-link href="{{ route('config.correlatives') }}" :active="request()->routeIs('config.correlatives')">
-                    <i class="fa fa-list-ol"></i>
+                    <div class="w-6">
+                        <i class="fa fa-list-ol"></i>
+                    </div>
                     <span class="ms-3">Correlatives</span>
+                </x-link>
+                <x-link href="{{ route('company') }}" :active="request()->routeIs('company')">
+                    <div class="w-6">
+                        <i class="fa fa-boxes"></i>
+                    </div>
+                    <span class="ms-3">Empresa</span>
                 </x-link>
             </ul>
         </div>

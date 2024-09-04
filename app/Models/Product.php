@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Storage;
 
 class Product extends Model
 {
@@ -34,9 +35,15 @@ class Product extends Model
     public function getPhotoUrlAttribute()
     {
         if ($this->generic_image_url) {
-            // Assuming $this->generic_image_url contains a path relative to 'public/uploads/'
-            return asset($this->generic_image_url);
+            // Verifica si el archivo existe
+            if (Storage::exists('public/' . $this->generic_image_url)) {
+                return asset($this->generic_image_url);
+            } else {
+                // Retorna un HTML con un ícono de FontAwesome
+                return asset('image/tag.svg');
+            }
         } else {
+            // Si no hay imagen definida, retorna un avatar generado
             $avatar = "https://avatar.iran.liara.run/username?username=" . $this->name;
             return $avatar;
         }
@@ -66,5 +73,13 @@ class Product extends Model
     public function parent()
     {
         return $this->belongsTo(Product::class, 'parent_id');
+    }
+    public function presentations()
+    {
+        return $this->hasMany(Presentation::class);
+    }
+    public function stocks()
+    {
+        return $this->hasMany(ProductStock::class);
     }
 }

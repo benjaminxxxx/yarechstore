@@ -2,7 +2,7 @@
 
 <x-modal :id="$id" :maxWidth="$maxWidth" {{ $attributes }}>
     <div>
-        <div class="text-lg font-medium text-white bg-indigo-600 dark:text-gray-100">
+        <div class="text-lg font-medium text-white bg-primary dark:text-gray-100">
             <x-spacingx>
                 {{ $title }}
             </x-spacingx>

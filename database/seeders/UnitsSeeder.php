@@ -29,6 +29,7 @@ class UnitsSeeder extends Seeder
             ['name' => 'Pallet'],
             ['name' => 'Set'],
             ['name' => 'Bolsa'],
+            ['name' => 'Fardo'],
         ];
 
         DB::table('units')->insert($units);

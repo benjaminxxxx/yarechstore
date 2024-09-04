@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\SalesController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\InicioController;
 use App\Http\Controllers\BranchController;
@@ -31,4 +33,6 @@ Route::middleware([
 
     Route::get('/config/units',[UnitController::class,'index'])->name('config.units');
     Route::get('/config/corelatives',[CorrelativeController::class,'index'])->name('config.correlatives');
+    Route::get('/company', [CompanyController::class,'index'])->name('company');
+    Route::get('/sales', [SalesController::class,'index'])->name('sales');
 });

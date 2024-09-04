@@ -23,9 +23,10 @@ class SunatService
     public function getSee($company)
     {
         $see = new See();
-        $see->setCertificate(Storage::disk('public')->get('certificates/' . $company->cert_path));
+        $see->setCertificate(Storage::disk('public')->get($company->cert_path));
         $see->setService($company->production ? SunatEndpoints::FE_PRODUCCION : SunatEndpoints::FE_BETA);
         $see->setClaveSOL($company->ruc, $company->sol_user, $company->sol_pass);
+        //dd($company->sol_pass);
 
         return $see;
     }
@@ -178,10 +179,10 @@ class SunatService
 
         $params = [
             'system' => [
-                'logo' => Storage::disk('public')->get('logos/' . $company->logo), // Logo de Empresa
-                'hash' => 'qqnr2dN4p/HmaEA/CJuVGo7dv5g=', // Valor Resumen 
+                'logo' => Storage::disk('public')->get($company->logo), // Logo de Empresa
+                //'hash' => 'qqnr2dN4p/HmaEA/CJuVGo7dv5g=', // Valor Resumen 
             ],
-            'user' => [
+            /*'user' => [
                 'header'     => 'Telf: <b>(01) 123375</b>', // Texto que se ubica debajo de la dirección de empresa
                 'extras'     => [
                     // Leyendas adicionales
@@ -189,7 +190,7 @@ class SunatService
                     ['name' => 'VENDEDOR'         , 'value' => 'GITHUB SELLER'],
                 ],
                 'footer' => '<p>Nro Resolucion: <b>3232323</b></p>'
-            ]
+            ]*/
         ];
 
         return $report->render($invoice, $params);

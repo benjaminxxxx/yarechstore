@@ -2,13 +2,13 @@
     <x-card>
         <x-spacing>
             <div class="mb-2 md:mb-4">
-                <x-button wire:click="openForm()">{{ __('Add New Unit') }}</x-button>
+                <x-button wire:click="openForm()">Añadir Nueva Unidad</x-button>
             </div>
             <x-table>
                 <x-slot name="thead">
                     <tr>
-                        <x-th value="{{ __('Name') }}" />
-                        <x-th value="{{ __('Actions') }}" class="text-center" />
+                        <x-th value="Nombre" />
+                        <x-th value="Acciones" class="text-center" />
                     </tr>
                 </x-slot>
                 <x-slot name="tbody">
@@ -19,13 +19,13 @@
                                 <x-td class="text-center">
                                     <div class="flex items-center justify-center">
                                         <x-button wire:click="edit({{ $unit->id }})">
-                                            <i class="fa fa-pencil mr-2"></i> {{ __('Edit') }}
+                                            <i class="fa fa-pencil mr-2"></i> Editar
                                         </x-button>
                                         @if ($unit->products->count() == 0)
                                             <x-danger-button
-                                                wire:confirm="{{ __('Are you sure you want to delete this unit?') }}"
+                                                wire:confirm="¿Estás seguro de que deseas eliminar esta unidad?"
                                                 wire:click="delete({{ $unit->id }})" class="ml-1">
-                                                <i class="fa fa-remove mr-2"></i> {{ __('Delete') }}
+                                                <i class="fa fa-remove mr-2"></i> Eliminar
                                             </x-danger-button>
                                         @endif
                                     </div>
@@ -34,7 +34,7 @@
                         @endforeach
                     @else
                         <x-tr>
-                            <x-td colspan="2">{{ __('No units found.') }}</x-td>
+                            <x-td colspan="2">No se encontraron unidades.</x-td>
                         </x-tr>
                     @endif
                 </x-slot>
@@ -44,13 +44,13 @@
 
     <x-dialog-modal wire:model="isFormOpen" maxWidth="lg">
         <x-slot name="title">
-            {{ __('Add New Unit') }}
+            Añadir Nueva Unidad
         </x-slot>
 
         <x-slot name="content">
             <form wire:submit.prevent="store">
                 <div>
-                    <x-label for="name">{{ __('Name') }}</x-label>
+                    <x-label for="name">Nombre</x-label>
                     <x-input type="text" wire:keydown.enter="store" wire:model="name" id="name" />
                     <x-input-error for="name" />
                 </div>
@@ -58,9 +58,8 @@
         </x-slot>
 
         <x-slot name="footer">
-            <x-secondary-button type="button" wire:click="closeForm"
-                class="mr-2">{{ __('Cancel') }}</x-secondary-button>
-            <x-button type="submit" wire:click="store" class="ml-3">{{ __('Save') }}</x-button>
+            <x-secondary-button type="button" wire:click="closeForm" class="mr-2">Cancelar</x-secondary-button>
+            <x-button type="submit" wire:click="store" class="ml-3">Guardar</x-button>
         </x-slot>
     </x-dialog-modal>
 

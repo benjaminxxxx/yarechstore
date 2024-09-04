@@ -2,15 +2,15 @@
     <x-card>
         <x-spacing>
             <div class="mb-2 md:mb-4">
-                <x-button wire:click="openForm()">{{ __('Add New Branch') }}</x-button>
+                <x-button wire:click="openForm()">Añadir Nueva Sucursal</x-button>
             </div>
             <x-table>
                 <x-slot name="thead">
                     <tr>
-                        <x-th value="{{ __('Company') }}" />
-                        <x-th value="{{ __('Branch') }}" />
-                        <x-th value="{{ __('Address') }}" />
-                        <x-th value="{{ __('Actions') }}" class="text-center" />
+                        <x-th value="Compañía" />
+                        <x-th value="Sucursal" />
+                        <x-th value="Dirección" />
+                        <x-th value="Acciones" class="text-center" />
                     </tr>
                 </x-slot>
                 <x-slot name="tbody">
@@ -23,13 +23,13 @@
                                 <x-td class="text-center">
                                     <div class="flex items-center justify-center">
                                         <x-button wire:click="edit('{{ $branch->code }}')">
-                                            <i class="fa fa-pencil mr-2"></i> {{ __('Edit') }}
+                                            <i class="fa fa-pencil mr-2"></i> Editar
                                         </x-button>
 
                                         <x-danger-button
-                                            wire:confirm="{{ __('Are you sure you want to delete this branch?') }}"
+                                            wire:confirm="¿Estás seguro de que deseas eliminar esta sucursal?"
                                             wire:click="delete('{{ $branch->code }}')" class="ml-1">
-                                            <i class="fa fa-remove mr-2"></i> {{ __('Delete') }}
+                                            <i class="fa fa-remove mr-2"></i> Eliminar
                                         </x-danger-button>
                                     </div>
 
@@ -38,7 +38,7 @@
                         @endforeach
                     @else
                         <x-tr>
-                            <x-td colspan="4">{{ __('No branches found.') }}</x-td>
+                            <x-td colspan="4">No se encontraron sucursales.</x-td>
                         </x-tr>
                     @endif
                 </x-slot>
@@ -47,23 +47,23 @@
     </x-card>
     <x-dialog-modal wire:model="isFormOpen" maxWidth="lg">
         <x-slot name="title">
-            {{ __('Add New Branch') }}
+            Añadir Nueva Sucursal
         </x-slot>
 
         <x-slot name="content">
             <form wire:submit.prevent="store">
                 <div>
-                    <x-label for="name">{{ __('Name') }}</x-label>
+                    <x-label for="name">Nombre</x-label>
                     <x-input type="text" wire:keydown.enter="store" wire:model="name" id="name" />
                     <x-input-error for="name" />
                 </div>
                 <div class="mt-3">
-                    <x-label for="address">{{ __('Address') }}</x-label>
+                    <x-label for="address">Dirección</x-label>
                     <x-input type="text" wire:keydown.enter="store" wire:model="address" id="address" />
                     <x-input-error for="address" />
                 </div>
                 <div class="mt-3">
-                    <x-label for="company_id">{{ __('Company') }}</x-label>
+                    <x-label for="company_id">Compañía</x-label>
                     <x-select wire:model="company_id" id="company_id">
                         @foreach ($companies as $company)
                             <option value="{{ $company->id }}">{{ $company->name }}</option>
@@ -76,8 +76,8 @@
 
         <x-slot name="footer">
             <x-secondary-button type="button" wire:click="closeForm"
-                class="mr-2">{{ __('Cancel') }}</x-secondary-button>
-            <x-button type="submit" wire:click="store" class="ml-3">{{ __('Save') }}</x-button>
+                class="mr-2">Cancelar</x-secondary-button>
+            <x-button type="submit" wire:click="store" class="ml-3">Guardar</x-button>
         </x-slot>
     </x-dialog-modal>
 

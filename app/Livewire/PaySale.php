@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
 use App\Models\Sale;
 use App\Models\PaymentMethod;
@@ -15,6 +16,7 @@ use App\Services\GenerateInvoiceSunatService;
 
 class PaySale extends Component
 {
+    use LivewireAlert;
     public $saleCode;
     public $isFormPayOpen = false;
     public $methods = [];
@@ -82,7 +84,7 @@ class PaySale extends Component
 
         }
     }
- 
+
     public function updated($propertyName)
     {
         // Detecta cuando se actualiza un valor específico en el array methodsAdded
@@ -90,7 +92,7 @@ class PaySale extends Component
             $this->recalculateChange();
         }
     }
- 
+
     /**
      * Formatea un valor numérico en formato decimal (##,#00.00).
      */
@@ -145,7 +147,7 @@ class PaySale extends Component
         $this->methodsAdded = [];
 
     }
-    
+
     public function checkMethodAvailable()
     {
         // Verifica si hay al menos un método de pago agregado con un monto mayor a 0
@@ -159,44 +161,53 @@ class PaySale extends Component
 
         if (!$verification['success']) {
             // Mostrar mensaje de error
-            return session()->flash('error', $verification['message']);
+            return $this->alert('error', $verification['message']);
         }
 
         if ($this->change < 0) {
-            return session()->flash('error', "No se puede hacer descuentos por este medio, regrese al carrito y haga el descuento allí");
+            return $this->alert('error', "No se puede hacer descuentos por este medio, regrese al carrito y haga el descuento allí");
         }
 
         if (!$this->document_selected) {
-            return session()->flash('error', "Seleccione un tipo de comprobante");
+            return $this->alert('error', "Seleccione un tipo de comprobante");
         }
-        
+
         if (array_key_exists('client', $this->methodsAdded) && $this->methodsAdded['client']['amount'] > 0) {
             if (!$this->existsClient()) {
-                return session()->flash('error', "Busque o Agregue un Cliente para Guardar el Pago Pendiente");
+                return $this->alert('error', "Busque o Agregue un Cliente para Guardar el Pago Pendiente");
             }
+            
         }
         if ($this->document_selected == 'factura') {
             //solicitar datos del cliente
             if (!$this->existsClient()) {
-                return session()->flash('error', "Seleccione o agrega un cliente");
+                return $this->alert('error', "Seleccione o agrega un cliente");
+            }
+
+            if(!$this->clientWithFactura()){
+                return $this->alert('error', "Para factura el cliente debe tener un RUC de 11 digitos");
             }
 
             //verificar si tiene correlativo
             if (!$this->existsCorrelative("factura")) {
-                return session()->flash('error', "Configure el correlativo de la Factura");
+                return $this->alert('error', "Configure el correlativo de la Factura");
             }
         }
         if ($this->document_selected == 'boleta') {
 
             //verificar si tiene correlativo
             if (!$this->existsCorrelative("boleta")) {
-                return session()->flash('error', "Configure el correlativo de la Boleta");
+                return $this->alert('error', "Configure el correlativo de la Boleta");
+            }
+
+            if ((float) $this->currentSale->total_amount > 700 && $this->currentSale->customer == null) {
+                return $this->alert('error', "Para emitir boletas mayores a S/. 700.00 soles debe agregar un cliente");
             }
         }
 
         $sale = Sale::where('code', $this->saleCode)->first();
         if (!$sale) {
-            return session()->flash('error', "La venta dejó de existir");
+            return $this->alert('error', "La venta dejó de existir");
         }
 
         // Iniciar una transacción
@@ -208,7 +219,7 @@ class PaySale extends Component
             $change = $this->change;
 
             // Actualizar inventario
-            foreach ($sale->items as $item) {
+            /*foreach ($sale->items as $item) {
                 $inventory = $item->product->inventory;
 
                 // Verificar si hay inventario
@@ -218,6 +229,22 @@ class PaySale extends Component
                     // Si falla, hacer rollback y mostrar mensaje de error
                     DB::rollBack();
                     return session()->flash('error', 'No hay suficiente stock para el producto: ' . $item->product->name);
+                }
+            }*/
+            foreach ($sale->items as $item) {
+                $product = $item->product;
+
+                // Obtener el stock del producto en la sucursal actual
+                $stockInBranch = $product->stocks()->where('branch_id', $this->branch->id)->first();
+
+                // Verificar si hay inventario suficiente considerando el factor
+                if ($stockInBranch && $stockInBranch->stock >= $item->quantity * $item->factor) {
+                    // Decrementar el stock considerando el factor
+                    $stockInBranch->decrement('stock', $item->quantity * $item->factor);
+                } else {
+                    // Si falla, hacer rollback y mostrar mensaje de error
+                    DB::rollBack();
+                    return $this->alert('error', 'No hay suficiente stock para el producto: ' . $product->name);
                 }
             }
 
@@ -319,7 +346,7 @@ class PaySale extends Component
             DB::commit();
 
             // Mostrar mensaje de éxito
-            session()->flash('message', 'Venta procesada exitosamente.');
+            $this->alert('success', 'Venta procesada exitosamente.');
             $this->generateInvoice($sale);
             $this->backStep();
             $this->dispatch('saleProcessed');
@@ -329,7 +356,7 @@ class PaySale extends Component
             DB::rollBack();
 
             // Mostrar mensaje de error
-            session()->flash('error', 'Error al procesar la venta: ' . $e->getMessage());
+            return $this->alert('error', 'Error al procesar la venta: ' . $e->getMessage());
         }
     }
     public function existsClient()
@@ -337,6 +364,15 @@ class PaySale extends Component
         if ($this->currentSale) {
             return $this->currentSale->customer_id != null;
         }
+    }
+    public function clientWithFactura()
+    {
+        if ($this->currentSale) {
+            $documentoLength = strlen(trim($this->currentSale->customer->document_number));
+            $documentoType = strlen(trim($this->currentSale->customer->document_type_id));
+            return $documentoType=='1' && $documentoLength==11;
+        }
+        return false;
     }
     public function existsCorrelative($type)
     {
@@ -378,9 +414,14 @@ class PaySale extends Component
     public function generateInvoice($sale)
     {
         $generateInvoiceService = new GenerateInvoiceSunatService();
+       
         $response = $generateInvoiceService->process($sale);
+        if($response['sunatResponse']['success']==false){
+            return $this->alert('error',$response['sunatResponse']['error']['code'] . ' - ' . $response['sunatResponse']['error']['message']);
+        }
+        //dd($response);
     }
-    public function verifyInventory()
+    /*public function verifyInventory()
     {
         $sale = Sale::where('code', $this->saleCode)->first();
 
@@ -408,7 +449,37 @@ class PaySale extends Component
             'success' => true,
             'message' => 'All products have sufficient inventory.'
         ];
+    }*/
+    public function verifyInventory()
+    {
+        $sale = Sale::where('code', $this->saleCode)->first();
+
+        foreach ($sale->items as $item) {
+            $product = $item->product;
+            $stockInBranch = $product->stocks()->where('branch_id', $this->branch->id)->first();
+
+            if ($stockInBranch) {
+                // Verificar si el inventario es suficiente considerando el factor
+                if ($stockInBranch->stock < $item->quantity * $item->factor) {
+                    return [
+                        'success' => false,
+                        'message' => "Inventario insuficiente para el producto: {$product->name} (ID: {$product->id})"
+                    ];
+                }
+            } else {
+                return [
+                    'success' => false,
+                    'message' => "No existe registro de inventario para el producto: {$product->name} (ID: {$product->id})"
+                ];
+            }
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Todos los productos tienen inventario suficiente.'
+        ];
     }
+
     public function render()
     {
         return view('livewire.pay-sale');

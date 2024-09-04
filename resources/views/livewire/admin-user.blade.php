@@ -2,27 +2,27 @@
     <x-card>
         <x-spacing>
             <div class="mb-2 md:mb-4 flex items-center">
-                <x-button wire:click="openForm()">{{ __('Add New User') }}</x-button>
+                <x-button wire:click="openForm()">Agregar Nuevo Usuario</x-button>
                 <form class="shadow-lg ml-3">
                     <label for="default-search"
-                        class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
+                        class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Buscar</label>
                     <div class="relative">
                         <div
-                            class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none text-indigo-600">
+                            class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none text-primary">
                             <i class="fa fa-search"></i>
                         </div>
                         <x-input type="search" wire:model.live="search" id="default-search" class="pl-10"
-                            autocomplete="off" placeholder="{{ __('Search...') }}" required />
+                            autocomplete="off" placeholder="Buscar" required />
                     </div>
                 </form>
             </div>
             <x-table>
                 <x-slot name="thead">
                     <tr>
-                        <x-th value="{{ __('Name') }}" />
-                        <x-th value="{{ __('Email') }}" />
-                        <x-th value="{{ __('Role') }}" />
-                        <x-th value="{{ __('Actions') }}" class="text-center" />
+                        <x-th value="Nombre" />
+                        <x-th value="Email" />
+                        <x-th value="Rol" />
+                        <x-th value="" class="text-center" />
                     </tr>
                 </x-slot>
                 <x-slot name="tbody">
@@ -50,7 +50,7 @@
                         @endforeach
                     @else
                         <x-tr>
-                            <x-td colspan="4">{{ __('No users found.') }}</x-td>
+                            <x-td colspan="4">Ningún Usuario Encontrado</x-td>
                         </x-tr>
                     @endif
                 </x-slot>
@@ -62,7 +62,7 @@
     </x-card>
     <x-dialog-modal wire:model="isFormOpen" maxWidth="2xl">
         <x-slot name="title">
-            {{ __('Add New User') }}
+            Agregar Nuevo Usuario
         </x-slot>
 
         <x-slot name="content">
@@ -70,22 +70,22 @@
                 <div class="grid grid-cols-5 gap-4">
                     <div class="col-span-5 md:col-span-3">
                         <div>
-                            <x-label for="name">{{ __('Name') }}</x-label>
+                            <x-label for="name">Nombre</x-label>
                             <x-input type="text" wire:keydown.enter="store" wire:model="name" id="name" />
                             <x-input-error for="name" />
                         </div>
                         <div class="mt-3">
-                            <x-label for="email">{{ __('Email') }}</x-label>
+                            <x-label for="email">Email</x-label>
                             <x-input type="email" wire:keydown.enter="store" wire:model="email" id="email" />
                             <x-input-error for="email" />
                         </div>
                         <div class="mt-3">
-                            <x-label for="password">{{ __('Password') }}</x-label>
+                            <x-label for="password">Clave</x-label>
                             <x-input type="password" wire:keydown.enter="store" wire:model="password" id="password" />
                             <x-input-error for="password" />
                         </div>
                         <div class="mt-3">
-                            <x-label for="role_id">{{ __('Role') }}</x-label>
+                            <x-label for="role_id">Rol</x-label>
                             <x-select wire:model="role_id" id="role_id">
                                 @foreach ($roles as $role)
                                     <option value="{{ $role->id }}">{{ $role->name }}</option>
@@ -117,8 +117,8 @@
 
         <x-slot name="footer">
             <x-secondary-button type="button" wire:click="closeForm"
-                class="mr-2">{{ __('Cancel') }}</x-secondary-button>
-            <x-button type="submit" wire:click="store" class="ml-3">{{ __('Save') }}</x-button>
+                class="mr-2">Cancelar</x-secondary-button>
+            <x-button type="submit" wire:click="store" class="ml-3">Guardar</x-button>
         </x-slot>
     </x-dialog-modal>
 

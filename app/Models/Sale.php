@@ -30,7 +30,9 @@ class Sale extends Model
         'cdr_path', 
         'document_path',
         'cash',
-        'cash_register_id'
+        'cash_register_id',
+        'emision_date',
+        'pay_date'
     ];
     
     public function invoiceType()
@@ -63,6 +65,14 @@ class Sale extends Model
     protected function totalAmountFormat(): Attribute
     {
         return Attribute::get(fn() => 'S/. ' . number_format($this->total_amount, 2, '.', ','));
+    }
+    public function getClientAttribute()
+    {
+        return $this->customer ? $this->customer->fullname : 'Cliente Varios';
+    }
+    public function getTotalItemsAttribute()
+    {
+        return $this->items ? $this->items->count() : 0;
     }
     protected function statusFormat(): Attribute
     {

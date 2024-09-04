@@ -1,5 +1,5 @@
 <div>
-    <x-secondary-button wire:click="pay" class="dark:bg-slate-900">
+    <x-secondary-button wire:click="pay">
         Pagar
     </x-secondary-button>
 
@@ -31,7 +31,7 @@
 
             <!-- Right Column -->
             <div class="flex-1 flex flex-col bg-slate-100">
-                <div class="bg-indigo-600  text-3xl text-center text-white">
+                <div class="bg-secondary  text-3xl text-center text-white">
                     <x-spacing>
                         Total: S/. <span class="subtotal">{{ $subtotal }}</span>
                     </x-spacing>
@@ -134,14 +134,14 @@
                     <!-- Botones -->
                     @if ($isPaymentMethodAvailable)
                         <button wire:click="processSale"
-                            class="w-1/2 bg-indigo-600 border-none hover:bg-indigo-700 text-white focus:outline-none text-2xl flex items-center justify-center">
+                            class="w-1/2 bg-primary border-none hover:bg-primaryHoverOpacity text-white focus:outline-none text-2xl flex items-center justify-center">
                             <x-spacing>
                                 <i class="fa fa-check mr-2"></i> Procesar Venta
                             </x-spacing>
                         </button>
                     @else
                         <button disabled
-                            class="w-1/2 bg-indigo-600 border-none hover:bg-indigo-700 text-white focus:outline-none text-2xl flex items-center justify-center">
+                            class="w-1/2 bg-primary border-none hover:bg-primaryHoverOpacity text-white focus:outline-none text-2xl flex items-center justify-center">
                             <x-spacing>
                                 <i class="fa fa-check mr-2"></i> Agregar método de pago
                             </x-spacing>
@@ -149,7 +149,7 @@
                     @endif
 
                     <button wire:click="backStep"
-                        class="w-1/2 bg-white hover:bg-slate-400 text-slate-600 bg-text-white text-3xl flex items-center justify-center">
+                        class="w-1/2 bg-white hover:bg-stone-100 text-stone-600 bg-text-white text-3xl flex items-center justify-center">
 
                         <x-spacing>
                             <i class="fa fa-arrow-left mr-2"></i> Regresar
