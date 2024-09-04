@@ -35,16 +35,16 @@ class Product extends Model
     public function getPhotoUrlAttribute()
     {
         if ($this->generic_image_url) {
-            // Verifica si el archivo existe
-            if (Storage::exists('public/' . $this->generic_image_url)) {
+            // Verifica si el archivo existe en la ruta absoluta
+            if (file_exists(public_path($this->generic_image_url))) {
                 return asset($this->generic_image_url);
             } else {
-                // Retorna un HTML con un ícono de FontAwesome
+                // Retorna un ícono predeterminado si no se encuentra el archivo
                 return asset('image/tag.svg');
             }
         } else {
             // Si no hay imagen definida, retorna un avatar generado
-            $avatar = "https://avatar.iran.liara.run/username?username=" . $this->name;
+            $avatar = "https://avatar.iran.liara.run/username?username=" . urlencode($this->name);
             return $avatar;
         }
     }
