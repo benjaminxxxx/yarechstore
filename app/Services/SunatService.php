@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Company as ModelsCompany;
+use App\Models\InvoiceExtraInformation;
 use DateTime;
 use Greenter\Model\Client\Client;
 use Greenter\Model\Company\Address;
@@ -106,7 +107,7 @@ class SunatService
     {
         $green_details = [];
 
-        foreach ($details as $detail) {        
+        foreach ($details as $detail) {
             $green_details[] = (new SaleDetail())
                 ->setCodProducto($detail['codProducto'] ?? null)
                 ->setUnidad($detail['unidad'] ?? null) // Unidad - Catalog. 03
@@ -160,7 +161,7 @@ class SunatService
         $cdr = $result->getCdrResponse();
 
         $response['cdrResponse'] = [
-            'code' => (int)$cdr->getCode(),
+            'code' => (int) $cdr->getCode(),
             'description' => $cdr->getDescription(),
             'notes' => $cdr->getNotes()
         ];
@@ -168,7 +169,8 @@ class SunatService
         return $response;
     }
 
-    public function getHtmlReport($invoice){
+    public function getHtmlReport($invoice)
+    {
         $report = new HtmlReport();
 
         $resolver = new DefaultTemplateResolver();
@@ -177,21 +179,55 @@ class SunatService
         $ruc = $invoice->getCompany()->getRuc();
         $company = ModelsCompany::first();
 
+        $userData = [];
+        $informations = InvoiceExtraInformation::all();
+
+        // Inicializa los valores para el 'header', 'extras', y 'footer' vacíos
+        $headerText = '';
+        $footerText = '';
+        $extrasArray = [];
+        foreach ($informations as $info) {
+            if ($info->type === 'header') {
+                // Para el header: nombre : valor (en negrita) con <br/> al final
+                $headerText .= $info->name . ': <b>' . $info->value . '</b><br/>';
+            } elseif ($info->type === 'footer') {
+                // Para el footer: valor en el mismo formato que header
+                $footerText .= $info->name . ': <b>' . $info->value . '</b><br/>';
+            } elseif ($info->type === 'extra') {
+                // Para extra: guarda los valores en formato array
+                $extrasArray[] = [
+                    'name' => $info->name,
+                    'value' => $info->value,
+                ];
+            }
+        }
+
+        if ($headerText !== '' || $footerText !== '' || !empty($extrasArray)) {
+            $userData['user'] = [];
+
+            if ($headerText !== '') {
+                $userData['user']['header'] = $headerText;
+            }
+
+            if (!empty($extrasArray)) {
+                $userData['user']['extras'] = $extrasArray;
+            }
+
+            if ($footerText !== '') {
+                $userData['user']['footer'] = $footerText;
+            }
+        }
+        
         $params = [
             'system' => [
                 'logo' => Storage::disk('public')->get($company->logo), // Logo de Empresa
                 //'hash' => 'qqnr2dN4p/HmaEA/CJuVGo7dv5g=', // Valor Resumen 
-            ],
-            /*'user' => [
-                'header'     => 'Telf: <b>(01) 123375</b>', // Texto que se ubica debajo de la dirección de empresa
-                'extras'     => [
-                    // Leyendas adicionales
-                    ['name' => 'CONDICION DE PAGO', 'value' => 'Efectivo'     ],
-                    ['name' => 'VENDEDOR'         , 'value' => 'GITHUB SELLER'],
-                ],
-                'footer' => '<p>Nro Resolucion: <b>3232323</b></p>'
-            ]*/
+            ]
         ];
+
+        if (!empty($userData)) {
+            $params = array_merge($params, $userData);
+        }
 
         return $report->render($invoice, $params);
     }
@@ -205,7 +241,7 @@ class SunatService
 
         $report = new PdfReport($htmlReport);
         // Options: Ver mas en https://wkhtmltopdf.org/usage/wkhtmltopdf.txt
-        $report->setOptions( [
+        $report->setOptions([
             'no-outline',
             'viewport-size' => '1280x1024',
             'page-width' => '21cm',
@@ -223,11 +259,11 @@ class SunatService
                 'hash' => 'qqnr2dN4p/HmaEA/CJuVGo7dv5g=', // Valor Resumen 
             ],
             'user' => [
-                'header'     => 'Telf: <b>(01) 123375</b>', // Texto que se ubica debajo de la dirección de empresa
-                'extras'     => [
+                'header' => 'Telf: <b>(01) 123375</b>', // Texto que se ubica debajo de la dirección de empresa
+                'extras' => [
                     // Leyendas adicionales
-                    ['name' => 'CONDICION DE PAGO', 'value' => 'Efectivo'     ],
-                    ['name' => 'VENDEDOR'         , 'value' => 'GITHUB SELLER'],
+                    ['name' => 'CONDICION DE PAGO', 'value' => 'Efectivo'],
+                    ['name' => 'VENDEDOR', 'value' => 'GITHUB SELLER'],
                 ],
                 'footer' => '<p>Nro Resolucion: <b>3232323</b></p>'
             ]

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\ConfigController;
 use App\Http\Controllers\SalesController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\InicioController;
@@ -35,4 +36,6 @@ Route::middleware([
     Route::get('/config/corelatives',[CorrelativeController::class,'index'])->name('config.correlatives');
     Route::get('/company', [CompanyController::class,'index'])->name('company');
     Route::get('/sales', [SalesController::class,'index'])->name('sales');
+
+    Route::get('/config/invoice-extra-information', [ConfigController::class,'InvoiceExtraInfomracion'])->name('config.InvoiceExtraInfomracion');
 });

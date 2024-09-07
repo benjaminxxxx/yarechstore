@@ -200,6 +200,13 @@
                     </div>
                     <span class="ms-3">Empresa</span>
                 </x-link>
+                <x-link href="{{ route('config.InvoiceExtraInfomracion') }}" :active="request()->routeIs('config.InvoiceExtraInfomracion')">
+                    <div class="w-6">
+                        <i class="fa fa-cogs"></i>
+                    </div>
+                    <span class="ms-3">Configuración de Factura</span>
+                </x-link>
+                
             </ul>
         </div>
     </aside>
