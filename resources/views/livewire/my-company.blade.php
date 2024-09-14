@@ -2,8 +2,8 @@
 
     <x-card>
         <x-spacing>
-            <form wire:submit.prevent="store">
-                <div>
+            <form wire:submit.prevent="store" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div class="mt-3">
                     <x-label for="name">Nombre</x-label>
                     <x-input type="text" wire:model="name" id="name" />
                     <x-input-error for="name" />
@@ -28,10 +28,29 @@
                     <x-input type="password" wire:model="sol_pass" id="sol_pass" />
                     <x-input-error for="sol_pass" />
                 </div>
+                
+                <div class="mt-3">
+                    <x-label for="client_secret">Client Secret</x-label>
+                    <x-input type="password" wire:model="client_secret" id="client_secret" autocomplete="off" />
+                    <x-input-error for="client_secret" />
+                </div>
+                <div class="mt-3">
+                    <x-label for="production">Modo</x-label>
+                    <x-select wire:model="production" id="production">
+                        <option value="0">En desarrollo</option>
+                        <option value="1">En Producción</option>
+                    </x-select>
+                    <x-input-error for="production" />
+                </div>
                 <div class="mt-3">
                     <x-label for="sert_path">Certificado</x-label>
                     @if ($cert_path || $cert_path_url)
+
                         <img src="{{ asset('image/pemfile.png') }}" class="w-auto max-h-16  object-cover">
+                        @if ($cert_path_url)
+                            <a href="{{ Storage::disk('public')->url($cert_path_url) }}"
+                                class="text-indigo-600 underline font-bold my-3" target="_blank">[Descargar Certificado]</a>
+                        @endif
                         <x-danger-button type="button" class="w-auto mt-2" wire:click="deleteCert">
                             <i class="fa fa-trash"></i>
                         </x-danger-button>
@@ -51,27 +70,14 @@
                                             class="font-semibold">Subir Certificado</p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400 text-center">Pem, Txt</p>
                                 </div>
-                                <input id="dropzone-file" type="file" wire:model="cert_path"
-                                class="hidden" accept=".pem" />
+                                <input id="dropzone-file" type="file" wire:model="cert_path" class="hidden"
+                                    accept=".pem" />
                             </label>
                         </div>
                     @endif
                     <x-input-error for="sert_path" />
                 </div>
-                <div class="mt-3">
-                    <x-label for="client_secret">Client Secret</x-label>
-                    <x-input type="password" wire:model="client_secret" id="client_secret" autocomplete="off" />
-                    <x-input-error for="client_secret" />
-                </div>
-                <div class="mt-3">
-                    <x-label for="production">Modo</x-label>
-                    <x-select wire:model="production" id="production">
-                        <option value="0">En desarrollo</option>
-                        <option value="1">En Producción</option>
-                    </x-select>
-                    <x-input-error for="production" />
-                </div>
-                <div class="mt-3 text-right">
+                <div class="mt-3 text-right col-span-1 md:cols-span-2 lg:col-span-3">
                     <x-button type="submit">Actualizar información</x-button>
                 </div>
             </form>

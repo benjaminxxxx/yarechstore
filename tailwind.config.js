@@ -23,6 +23,10 @@ export default {
                 primaryDarkHoverOpacity: 'rgba(29, 78, 216, 0.8)', // Color de fondo con opacidad para hover en modo oscuro
                 primaryFocus: '#22428D', // Color del anillo de enfoque en modo claro
                 primaryDarkFocus: '#1d4ed8', // Color del anillo de enfoque en modo oscuro
+                bodydark: '#7A9985',
+                bodydark1: '#E0E0E0',
+                bodydark2: '#E0E0E0',
+                gray: '#C6C6C6',
         
                 secondary: '#F5922A', // Color secundario
                 secondaryDark: '#F5681F', // Color secundario para el modo oscuro

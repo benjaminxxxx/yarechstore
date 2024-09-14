@@ -37,5 +37,6 @@ Route::middleware([
     Route::get('/company', [CompanyController::class,'index'])->name('company');
     Route::get('/sales', [SalesController::class,'index'])->name('sales');
 
-    Route::get('/config/invoice-extra-information', [ConfigController::class,'InvoiceExtraInfomracion'])->name('config.InvoiceExtraInfomracion');
+    Route::get('/config/invoice-extra-information', [ConfigController::class,'invoiceExtraInfomracion'])->name('config.invoiceExtraInfomracion');
+    Route::get('/config/site', [ConfigController::class,'site'])->name('config.site');
 });

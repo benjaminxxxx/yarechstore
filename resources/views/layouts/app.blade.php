@@ -16,7 +16,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/custom.css') }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('image/favicon.png') }}">
+    @php
+        $faviconUrl =
+            $siteConfig && $siteConfig->site_favicon
+                ? Storage::disk('public')->url($siteConfig->site_favicon)
+                : asset('image/favicon.png');
+
+        $faviconExtension = pathinfo($faviconUrl, PATHINFO_EXTENSION);
+        $faviconType = match ($faviconExtension) {
+            'png' => 'image/png',
+            'ico' => 'image/x-icon',
+            'jpg', 'jpeg' => 'image/jpeg',
+            'svg' => 'image/svg+xml',
+            default => 'image/png', // fallback to png
+        };
+    @endphp
+
+    <link rel="icon" type="{{ $faviconType }}" sizes="32x32" href="{{ $faviconUrl }}">
+
     <meta name="msapplication-TileColor" content="#ffffff">
     <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
@@ -125,7 +142,7 @@
 
     <aside :class="isOpen ? 'translate-x-0' : '-translate-x-full'" id="logo-sidebar"
         class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform bg-primary border-r border-gray-200 sm:translate-x-0 dark:bg-gray-800 dark:border-gray-700"
-        aria-label="Sidebar" style="z-index: 99">
+        aria-label="Sidebar" style="z-index: 99" x-data="{ selected: $persist('Dashboard') }">
         <div class="h-full px-3 pb-4 overflow-y-auto">
             <div class="my-10">
                 <button @click="isOpen = !isOpen" type="button"
@@ -139,7 +156,10 @@
                     </svg>
                 </button>
                 <a href="{{ route('dashboard') }}" class="flex w-full justify-center">
-                    <img src="{{ asset('image/logo-contrast.svg') }}" alt="" class="max-h-12 w-full">
+                    <img src="{{ $siteConfig && $siteConfig->site_logo_contrast
+                        ? Storage::disk('public')->url($siteConfig->site_logo_contrast)
+                        : asset('image/logo-contrast.svg') }}"
+                        alt="Yarech Store" class="max-w-full h-auto object-cover">
                 </a>
             </div>
             <ul>
@@ -194,19 +214,23 @@
                     </div>
                     <span class="ms-3">Correlatives</span>
                 </x-link>
-                <x-link href="{{ route('company') }}" :active="request()->routeIs('company')">
-                    <div class="w-6">
-                        <i class="fa fa-boxes"></i>
-                    </div>
-                    <span class="ms-3">Empresa</span>
-                </x-link>
-                <x-link href="{{ route('config.InvoiceExtraInfomracion') }}" :active="request()->routeIs('config.InvoiceExtraInfomracion')">
-                    <div class="w-6">
-                        <i class="fa fa-cogs"></i>
-                    </div>
-                    <span class="ms-3">Configuración de Factura</span>
-                </x-link>
-                
+              
+
+                <x-nav-link-parent name="sectorConfiguracion" :active="request()->routeIs(['config.invoiceExtraInfomracion', 'config.site','company'])">
+                    <i class="fa fa-cogs"></i>
+                    Configuración
+                    <x-slot name="children">
+                        <x-nav-link-child href="{{ route('company') }}" :active="request()->routeIs('company')">
+                            Empresa
+                        </x-nav-link-child>
+                        <x-nav-link-child href="{{ route('config.invoiceExtraInfomracion') }}" :active="request()->routeIs('config.invoiceExtraInfomracion')">
+                            Factura
+                        </x-nav-link-child>
+                        <x-nav-link-child href="{{ route('config.site') }}" :active="request()->routeIs('config.site')">
+                            Sitio
+                        </x-nav-link-child>
+                    </x-slot>
+                </x-nav-link-parent>
             </ul>
         </div>
     </aside>

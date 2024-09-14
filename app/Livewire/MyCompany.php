@@ -8,6 +8,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Database\QueryException;
 use Storage;
+use Str;
 
 class MyCompany extends Component
 {
@@ -53,9 +54,12 @@ class MyCompany extends Component
 
         // Si se carga un nuevo certificado
         if ($this->cert_path) {
-            $this->cert_path_url = $this->cert_path->store('certificates', 'public');
+            // Generar un nombre aleatorio de 20 caracteres con extensión .pem
+            $filename = Str::random(20) . '.pem';
+    
+            // Almacenar el archivo con el nombre generado
+            $this->cert_path_url = $this->cert_path->storeAs('certificates', $filename, 'public');
         }
-
         // Intentar guardar o actualizar la empresa
         try {
 

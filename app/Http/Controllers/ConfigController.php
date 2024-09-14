@@ -6,7 +6,10 @@ use Illuminate\Http\Request;
 
 class ConfigController extends Controller
 {
-    public function InvoiceExtraInfomracion(){
+    public function invoiceExtraInfomracion(){
         return view('config.invoice-extra-information');
+    }
+    public function site(){
+        return view('config.site');
     }
 }

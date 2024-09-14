@@ -1,46 +1,38 @@
 <div>
     <x-card>
         <x-spacing>
-            <div class="mb-2 md:mb-4">
+            <div class="mb-2 md:mb-4 flex justify-between items-center">
                 <x-button wire:click="openForm()">Añadir Nueva Unidad</x-button>
+                <!-- Filtro o búsqueda opcional -->
+                <input type="text" placeholder="Buscar..." class="p-2 border rounded">
             </div>
-            <x-table>
-                <x-slot name="thead">
-                    <tr>
-                        <x-th value="Nombre" />
-                        <x-th value="Acciones" class="text-center" />
-                    </tr>
-                </x-slot>
-                <x-slot name="tbody">
-                    @if ($units->count())
-                        @foreach ($units as $unit)
-                            <x-tr>
-                                <x-th value="{{ $unit->name }}" />
-                                <x-td class="text-center">
-                                    <div class="flex items-center justify-center">
-                                        <x-button wire:click="edit({{ $unit->id }})">
-                                            <i class="fa fa-pencil mr-2"></i> Editar
-                                        </x-button>
-                                        @if ($unit->products->count() == 0)
-                                            <x-danger-button
-                                                wire:confirm="¿Estás seguro de que deseas eliminar esta unidad?"
-                                                wire:click="delete({{ $unit->id }})" class="ml-1">
-                                                <i class="fa fa-remove mr-2"></i> Eliminar
-                                            </x-danger-button>
-                                        @endif
-                                    </div>
-                                </x-td>
-                            </x-tr>
-                        @endforeach
-                    @else
-                        <x-tr>
-                            <x-td colspan="2">No se encontraron unidades.</x-td>
-                        </x-tr>
-                    @endif
-                </x-slot>
-            </x-table>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                @if ($units->count())
+                    @foreach ($units as $unit)
+                        <div class="bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
+                            <div class="text-lg font-semibold mb-2">{{ $unit->name }}</div>
+                            <div class="flex space-x-2">
+                                <x-button wire:click="edit({{ $unit->id }})">
+                                    <i class="fa fa-pencil mr-1"></i> Editar
+                                </x-button>
+                                @if ($unit->products->count() == 0)
+                                    <x-danger-button wire:confirm="¿Estás seguro de que deseas eliminar esta unidad?"
+                                        wire:click="delete({{ $unit->id }})">
+                                        <i class="fa fa-remove mr-1"></i> Eliminar
+                                    </x-danger-button>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+                @else
+                    <div class="col-span-full text-center text-gray-500">
+                        No se encontraron unidades.
+                    </div>
+                @endif
+            </div>
         </x-spacing>
     </x-card>
+
 
     <x-dialog-modal wire:model="isFormOpen" maxWidth="lg">
         <x-slot name="title">

@@ -1,10 +1,19 @@
 <x-guest-layout>
     <div class="bg-slate-100 flex items-center justify-center h-screen ">
-        <div class="w-full max-w-6xl m-auto shadow-lg rounded-lg overflow-hidden md:flex items-center h-screen lg:max-h-[36rem]">
+        <div
+            class="w-full max-w-6xl m-auto shadow-lg rounded-lg overflow-hidden md:flex items-center h-screen lg:max-h-[36rem]">
             <!-- Left Panel -->
             <div class="hidden md:block w-full md:w-3/5 bg-white p-8 relative h-full">
+                @php
+                    // Obtener el logo horizontal desde SiteConfig
+                    $logoHorizontalUrl =
+                        $siteConfig && $siteConfig->site_logo_horizontal
+                            ? Storage::disk('public')->url($siteConfig->site_logo_horizontal)
+                            : asset('image/logo.svg');
+                @endphp
+
                 <div class="absolute top-0 left-0 p-8">
-                    <img src="{{ asset('image/logo.svg') }}" alt="Logo" class="h-7">
+                    <img src="{{ $logoHorizontalUrl }}" alt="Logo" class="h-16">
                 </div>
                 <div class="flex items-center justify-center h-full">
                     <img src="{{ asset('image/login-main.svg') }}" alt="Large Logo" style="width:60%">
@@ -33,15 +42,14 @@
                         </div>
 
                         <div class="mt-4">
-                            <x-input id="password"  placeholder="Contraseña" class="block mt-1 w-full" type="password" name="password" required
-                                 />
+                            <x-input id="password" placeholder="Contraseña" class="block mt-1 w-full" type="password"
+                                name="password" required />
                         </div>
 
                         <div class="block my-5">
                             <label for="remember_me" class="flex items-center">
                                 <x-checkbox id="remember_me" name="remember" />
-                                <span
-                                    class="ms-2 text-sm text-secondaryText">Recordar sesión</span>
+                                <span class="ms-2 text-sm text-secondaryText">Recordar sesión</span>
                             </label>
                         </div>
 
