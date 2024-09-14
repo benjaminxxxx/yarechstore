@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Company as ModelsCompany;
 use App\Models\InvoiceExtraInformation;
+use App\Models\SiteConfig;
 use DateTime;
 use Greenter\Model\Client\Client;
 use Greenter\Model\Company\Address;
@@ -217,10 +218,20 @@ class SunatService
                 $userData['user']['footer'] = $footerText;
             }
         }
-        
+        $logoPath = $company->logo;
+
+        // Obtén la configuración del sitio
+        $siteConfig = SiteConfig::first();
+        if ($siteConfig) {
+            // Obtén la ruta del logo desde la configuración
+            $logoPath = $siteConfig->site_logo_horizontal;
+        }
+
+
+
         $params = [
             'system' => [
-                'logo' => Storage::disk('public')->get($company->logo), // Logo de Empresa
+                'logo' => $logoPath ? Storage::disk('public')->get($logoPath) : null, // Logo de Empresa
                 //'hash' => 'qqnr2dN4p/HmaEA/CJuVGo7dv5g=', // Valor Resumen 
             ]
         ];
