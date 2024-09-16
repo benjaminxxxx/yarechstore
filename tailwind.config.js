@@ -26,7 +26,7 @@ export default {
                 bodydark: '#7A9985',
                 bodydark1: '#E0E0E0',
                 bodydark2: '#E0E0E0',
-                gray: '#C6C6C6',
+                grayNormal: '#C6C6C6',
         
                 secondary: '#F5922A', // Color secundario
                 secondaryDark: '#F5681F', // Color secundario para el modo oscuro

@@ -44,7 +44,6 @@ class ViewProduct extends Component
     public $product_child;
     public $productCategories = [];
     public $presentations = [];
-    protected $listeners = ['viewProduct' => 'see'];
     public $isCategoryOpen = false;
     public $categoriesFull;
     public $branch_id;
@@ -52,6 +51,7 @@ class ViewProduct extends Component
     public $categories;
     public $branches;
     public $branchArray = [];
+    protected $listeners = ['viewProduct' => 'see','deleteProduct'];
     protected function rules()
     {
         $rules = [
@@ -339,5 +339,37 @@ class ViewProduct extends Component
     public function openCategories()
     {
         $this->isCategoryOpen = true;
+    }
+    public function askDeleteProduct(){
+        if(!$this->productId){
+            $this->alert('error','El producto No esta Seleccionado');
+        }
+
+        $this->alert('question', '¿Seguro que desea eliminar este Producto?', [
+            'showConfirmButton' => true,
+            'showCancelButton' => true,
+            'confirmButtonText' => 'Si',
+            'cancelButtonText' => 'No, Cancelar',
+            'onConfirmed' => 'deleteProduct',
+            'onDismissed' => 'cancelled',
+            'position' => 'center',
+            'toast' => false,
+            'timer' => null,
+            'confirmButtonColor' => '#F5922A',
+            'cancelButtonColor' => '#2C2C2C',
+        ]);
+    }
+    public function deleteProduct(){
+        if(!$this->productId){
+            $this->alert('error','El producto No esta Seleccionado');
+        }
+
+        $producto = Product::find($this->productId);
+        if($producto){
+            $producto->is_active = false;
+            $producto->save();
+        }
+        $this->dispatch('ProductSaved');
+        $this->closeForm();
     }
 }

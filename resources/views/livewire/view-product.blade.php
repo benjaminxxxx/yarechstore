@@ -200,63 +200,7 @@
                                 <x-input type="text" wire:model="sunatcode" id="sunatcode" />
                                 <x-input-error for="sunatcode" />
                             </div>
-                            @if ($productId)
-
-                                @if (!$product_child)
-                                    <div class="my-3 w-full">
-                                        <x-success-button type="button" class="w-full"
-                                            wire:click="createProductChild({{ $productId }})">Crear producto
-                                            hijo</x-success-button>
-                                    </div>
-                                @endif
-                            @endif
                         </div>
-                        @if ($product_child)
-                            <div class="col-span-3">
-                                <x-table>
-                                    <x-slot name="thead">
-                                        <tr>
-                                            <x-th value="{{ __('Product Image') }}" />
-                                            <x-th value="{{ __('Product Name') }}" />
-                                            <x-th value="{{ __('Purchase price') }}" />
-                                            <x-th value="{{ __('Unit type') }}" />
-                                            <x-th value="{{ __('Final price') }}" />
-                                            <x-th value="{{ __('Barcode') }}" />
-                                            <x-th value="{{ __('Sunar code') }}" />
-                                            <x-th value="{{ __('Actions') }}" class="text-center" />
-                                        </tr>
-                                    </x-slot>
-                                    <x-slot name="tbody">
-                                        <x-tr>
-                                            <x-td>
-                                                <img src="{{ $product_child->photo_url }}"
-                                                    alt="{{ $product_child->name }}" class="w-10 h-10 object-cover">
-                                            </x-td>
-                                            <x-td>{{ $product_child->name }}</x-td>
-                                            <x-td>{{ $product_child->purchase_price }}</x-td>
-                                            <x-td>{{ $product_child->unit->name }}</x-td>
-                                            <x-td>{{ $product_child->final_price }}</x-td>
-                                            <x-td>{{ $product_child->barcode }}</x-td>
-                                            <x-td>{{ $product_child->sunatcode }}</x-td>
-                                            <x-td class="text-center">
-                                                <div class="flex items-center justify-center">
-                                                    <x-button wire:click="see({{ $product_child->id }})">
-                                                        <i class="fa fa-eye  mr-2"></i> {{ __('See') }}
-                                                    </x-button>
-                                                    <x-danger-button
-                                                        wire:confirm="{{ __('Are you sure you want to delete this item?') }}"
-                                                        wire:click="delete('{{ $product_child->code }}')"
-                                                        class="ml-1">
-                                                        <i class="fa fa-remove mr-2"></i> {{ __('Delete') }}
-                                                    </x-danger-button>
-
-                                                </div>
-                                            </x-td>
-                                        </x-tr>
-                                    </x-slot>
-                                </x-table>
-                            </div>
-                        @endif
                     </div>
                 </div>
                 <div x-show="activeTab === 'presentacion'" class="mt-4">
@@ -345,12 +289,9 @@
             </div>
         </x-slot>
         <x-slot name="footer">
+            <x-danger-button type="button" wire:click="askDeleteProduct" class="mr-2">Eliminar Producto</x-danger-button>
             <x-button-normal type="button" wire:click="closeForm" class="mr-2">Cancelar</x-button-normal>
-            @if ($product_child)
-                <x-button type="button" wire:click="save">Guardar y actualizar producto hijo</x-button>
-            @else
-                <x-button type="button" wire:click="save">Guardar</x-button>
-            @endif
+            <x-button type="button" wire:click="save">Guardar</x-button>
         </x-slot>
     </x-dialog-modal-header>
     <x-dialog-modal-header wire:model="isCategoryOpen" maxWidth="full">

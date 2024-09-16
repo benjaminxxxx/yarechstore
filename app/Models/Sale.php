@@ -5,39 +5,40 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Storage;
 
 class Sale extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'code', 
-        'customer_id', 
-        'customer_name', 
+        'code',
+        'customer_id',
+        'customer_name',
         'customer_document',
-        'status', 
-        'subtotal', 
-        'total_amount', 
-        'igv', 
+        'status',
+        'subtotal',
+        'total_amount',
+        'igv',
         'payment_method',
-        'document_status', 
-        'document_type_id', 
-        'document_code', 
+        'document_status',
+        'document_type_id',
+        'document_code',
         'branch_id',
         'invoice_type_id',
-        'document_correlative', 
-        'xml_path', 
-        'signed_xml_path', 
-        'cdr_path', 
+        'document_correlative',
+        'xml_path',
+        'signed_xml_path',
+        'cdr_path',
         'document_path',
         'cash',
         'cash_register_id',
         'emision_date',
         'pay_date'
     ];
-    
+
     public function invoiceType()
     {
-        return $this->belongsTo(InvoicesType::class,'invoice_type_id');
+        return $this->belongsTo(InvoicesType::class, 'invoice_type_id');
     }
     public function items()
     {
@@ -69,6 +70,26 @@ class Sale extends Model
     public function getClientAttribute()
     {
         return $this->customer ? $this->customer->fullname : 'Cliente Varios';
+    }
+    public function getDocumentPathOficialAttribute()
+    {
+        if ($this->document_path) {
+            // Usar pathinfo para dividir la ruta y manipularla
+            $pathInfo = pathinfo($this->document_path);
+
+            // Construir la nueva ruta añadiendo '_oficial' antes de la extensión
+            $documentPath = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '_oficial.' . $pathInfo['extension'];
+
+            // Verificar si el archivo existe en el disco 'public'
+            if (Storage::disk('public')->exists($documentPath)) {
+                // Retornar la URL completa si el archivo existe
+                return $documentPath;
+            }
+        }
+
+
+        // Retornar null si el archivo no existe
+        return null;
     }
     public function getTotalItemsAttribute()
     {

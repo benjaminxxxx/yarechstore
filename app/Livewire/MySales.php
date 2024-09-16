@@ -6,6 +6,7 @@ use App\Models\Branch;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Session;
+use Storage;
 
 class MySales extends Component
 {
@@ -27,5 +28,21 @@ class MySales extends Component
         return view('livewire.my-sales',[
             'sales'=>$sales
         ]);
+    }
+    public function downloadXML($path)
+    {
+        return Storage::disk('public')->download($path);
+    }
+    public function downloadCDR($path)
+    {
+        return Storage::disk('public')->download($path);
+    }
+    public function downloadDocument($path)
+    {
+        return Storage::disk('public')->download($path);
+    }
+    public function openDetailOption($saleId){
+      
+        $this->dispatch('openDetail',$saleId);
     }
 }

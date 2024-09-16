@@ -1,7 +1,9 @@
 <div>
     <x-card>
         <x-spacing>
-
+            <x-h2 class="mb-2">
+                Ventas Realizadas
+            </x-h2>
             <x-table>
                 <x-slot name="thead">
                     <tr>
@@ -15,6 +17,10 @@
                         <x-th value="Gravado" class="text-right" />
                         <x-th value="IGV" class="text-right" />
                         <x-th value="Saldo" class="text-right" />
+                        <x-th value="XML" class="text-center" />
+                        <x-th value="CDR" class="text-center" />
+                        <x-th value="VOUCHER" class="text-center" />
+                        <x-th value="PDF A4" class="text-center" />
                         <x-th value="Detalle" />
                     </tr>
                 </x-slot>
@@ -59,7 +65,37 @@
                                 <x-th value="{{ $sale->igv }}" class="text-right" />
                                 <x-th value="{{ $sale->saldo }}" class="text-right" />
                                 <x-td class="text-center">
-                                    
+                                    @if ($sale->signed_xml_path)
+                                        <x-success-button wire:click.prevent="downloadXML('{{ $sale->signed_xml_path }}')">
+                                            XML
+                                        </x-success-button>
+                                    @endif
+                                </x-td>
+                                <x-td class="text-center">
+                                    @if ($sale->cdr_path)
+                                        <x-success-button wire:click.prevent="downloadCDR('{{ $sale->cdr_path }}')">
+                                            CDR
+                                        </x-success-button>
+                                    @endif
+                                </x-td>
+                                <x-td class="text-center">
+                                    @if ($sale->document_path)
+                                        <x-success-button wire:click.prevent="downloadDocument('{{ $sale->document_path }}')">
+                                            Voucher
+                                        </x-success-button>
+                                    @endif
+                                </x-td>
+                                <x-td class="text-center">
+                                    @if ($sale->document_path_oficial)
+                                        <x-success-button wire:click.prevent="downloadDocument('{{ $sale->document_path_oficial }}')">
+                                            Voucher A4
+                                        </x-success-button>
+                                    @endif
+                                </x-td>
+                                <x-td class="text-center">
+                                    <x-button wire:click.prevent="openDetailOption({{ $sale->id }})">
+                                        Ver Detalle
+                                    </x-button>
                                 </x-td>
                             </x-tr>
                         @endforeach

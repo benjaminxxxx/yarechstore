@@ -2,7 +2,7 @@
     <x-card>
         <x-spacing>
             <div class="mb-2 md:mb-4 flex items-center">
-                <x-button wire:click="openForm()">{{ __('Add New Product') }}</x-button>
+                <x-button wire:click="openForm()">Agregar Nuevo Producto</x-button>
                 <form class="shadow-lg ml-3">
                     <label for="default-search"
                         class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
@@ -11,7 +11,7 @@
                             class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none text-primary">
                             <i class="fa fa-search"></i>
                         </div>
-                        <x-input type="search" wire:model="search" wire:keyup="searching" id="default-search"
+                        <x-input type="search" wire:model.live="search" id="default-search"
                             class="pl-10" autocomplete="off" placeholder="Buscar" required />
                     </div>
                 </form>

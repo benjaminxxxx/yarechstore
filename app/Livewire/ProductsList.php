@@ -44,9 +44,10 @@ class ProductsList extends Component
         $this->products = Product::orderBy('name')->whereNull('parent_id')->get();
         
     }
-
+/*
     public function searching()
     {
+        /*
         $branchCode = Session::get('selected_branch');
         $branch = Branch::where('code', $branchCode)->first();
 
@@ -57,10 +58,16 @@ class ProductsList extends Component
                     ->orWhere('description', 'like', '%' . $this->search . '%');
             })
             ->get();
-    }
+        
+    }*/
 
     public function render()
     {
+        $this->products = Product::where(function ($query) {
+            $query->where('name', 'like', '%' . $this->search . '%')
+                ->orWhere('description', 'like', '%' . $this->search . '%');
+        })->where('is_active',true)->orderBy('name')->get();
+
         return view('livewire.products-list');
     }
     /*

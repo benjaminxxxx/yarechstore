@@ -4,5 +4,6 @@
     </x-slot>
 
     <livewire:my-sales/>
+    <livewire:detail-sale/>
     
 </x-app-layout>

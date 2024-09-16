@@ -32,6 +32,7 @@ class Sell extends Component
     public $quantities = [];
     public $isCashRegisterEnabled;
     public $codigoVenta;
+    protected $listeners = ['saleProcessed', 'ProductPriceUpdated', 'anularVenta'];
     public function mount()
     {
         $this->isCashRegisterEnabled = env('USE_CASH_REGISTER', false);
@@ -43,9 +44,7 @@ class Sell extends Component
             $this->reCart();
         }
     }
-    public function generateInvoice(){
-        dd($this->currentSale);
-    }
+    
     public function reCart()
     {
         if ($this->branch) {
@@ -93,7 +92,7 @@ class Sell extends Component
             $this->resultsProduct = Product::where(function ($query) {
                 $query->where('name', 'like', '%' . $this->searchProduct . '%')
                     ->orWhere('description', 'like', '%' . $this->searchProduct . '%');
-            })->get();
+            })->where('is_active',true)->get();
         }
     }
     public function addCart()
@@ -509,7 +508,7 @@ class Sell extends Component
             $this->currentSale = $this->sales[$this->currentIndex];
         }
     }
-    protected $listeners = ['saleProcessed', 'ProductPriceUpdated', 'anularVenta'];
+    
 
     public function saleProcessed()
     {
@@ -517,7 +516,8 @@ class Sell extends Component
     }
     public function ProductPriceUpdated($itemId)
     {
-        $this->updateQuantityToCart($itemId);
+        //$this->updateQuantityToCart($itemId);
+        $this->updateSaleTotal();
         $this->reCart();
     }
 
