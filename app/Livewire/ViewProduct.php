@@ -17,6 +17,8 @@ use Illuminate\Database\QueryException;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
 use Auth;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 
 class ViewProduct extends Component
 {
@@ -51,7 +53,7 @@ class ViewProduct extends Component
     public $categories;
     public $branches;
     public $branchArray = [];
-    protected $listeners = ['viewProduct' => 'see','deleteProduct'];
+    protected $listeners = ['viewProduct' => 'see','deleteProduct','createNewProduct'];
     protected function rules()
     {
         $rules = [
@@ -177,6 +179,43 @@ class ViewProduct extends Component
             $this->alert('error', 'Hubo un problema al actualizar el producto: ' . $e->getMessage());
         }
     }
+    protected function storeCoverImage($image)
+    {
+        $currentYear = now()->year;
+        $currentMonth = now()->month;
+
+        $directory = "uploads/{$currentYear}/{$currentMonth}";
+
+        // Define the full path where the image will be stored
+        $path = public_path($directory);
+
+        // Create the directory if it doesn't exist
+        if (!file_exists($path)) {
+            mkdir($path, 0755, true);
+        }
+
+        $filename = Str::slug(pathinfo($image->getClientOriginalName(), PATHINFO_FILENAME));
+        $extension = $image->getClientOriginalExtension();
+        $fullFilename = "{$filename}.{$extension}";
+        $counter = 1;
+
+        // Check if file already exists and append counter if it does
+        while (file_exists("{$path}/{$fullFilename}")) {
+            $fullFilename = "{$filename}-{$counter}.{$extension}";
+            $counter++;
+        }
+
+        $imgManager = new ImageManager(new Driver());
+        $thumbImage = $imgManager->read($image->getRealPath());
+
+        $thumbImage->cover(400, 400);
+
+        // Store the image
+        $thumbImage->save("{$path}/{$fullFilename}");
+
+        // Return the relative path
+        return "{$directory}/{$fullFilename}";
+    }
     protected function savePresentations($product)
     {
         // Eliminar presentaciones existentes si es una actualización
@@ -206,6 +245,9 @@ class ViewProduct extends Component
                 ]
             );
         }
+    }
+    public function createNewProduct(){
+        $this->openForm();
     }
     public function see($productCode)
     {

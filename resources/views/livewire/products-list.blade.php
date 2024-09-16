@@ -2,7 +2,7 @@
     <x-card>
         <x-spacing>
             <div class="mb-2 md:mb-4 flex items-center">
-                <x-button wire:click="openForm()">Agregar Nuevo Producto</x-button>
+                <x-button wire:click="create">Agregar Nuevo Producto</x-button>
                 <form class="shadow-lg ml-3">
                     <label for="default-search"
                         class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>

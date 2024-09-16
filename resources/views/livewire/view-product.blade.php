@@ -289,7 +289,9 @@
             </div>
         </x-slot>
         <x-slot name="footer">
+            @if($productId!=null)
             <x-danger-button type="button" wire:click="askDeleteProduct" class="mr-2">Eliminar Producto</x-danger-button>
+            @endif
             <x-button-normal type="button" wire:click="closeForm" class="mr-2">Cancelar</x-button-normal>
             <x-button type="button" wire:click="save">Guardar</x-button>
         </x-slot>
