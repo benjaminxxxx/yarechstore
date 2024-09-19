@@ -76,7 +76,7 @@ class CartClient extends Component
 
         $client = new Client();
 
-        $url = "http://localhost/apisunat/public/api/v1/ruc/{$ruc}?token={$token}";
+        $url = "https://apisunat.perudevsolutions.com/public/api/v1/ruc/{$ruc}?token={$token}";
 
         try {
             $response = $client->request('GET', $url);

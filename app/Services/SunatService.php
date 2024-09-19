@@ -172,10 +172,19 @@ class SunatService
 
     public function getHtmlReport($invoice)
     {
-        $report = new HtmlReport();
+        $templatePath = resource_path('views/documents');
+
+         // Opciones para el motor Twig
+         $twigOptions = [
+            'cache' => storage_path('app/cache/twig'), // Directorio donde guardar la caché de Twig
+            'strict_variables' => true,
+        ];
+
+        $report = new HtmlReport($templatePath, $twigOptions);
 
         $resolver = new DefaultTemplateResolver();
-        $report->setTemplate($resolver->getTemplate($invoice));
+        //$report->setTemplate($resolver->getTemplate($invoice));
+        $report->setTemplate('factura.html.twig');
 
         $ruc = $invoice->getCompany()->getRuc();
         $company = ModelsCompany::first();

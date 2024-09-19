@@ -3,6 +3,10 @@
 namespace App\Livewire;
 
 use App\Models\Branch;
+use App\Models\Sale;
+use App\Services\GenerateDocumentService;
+use App\Services\GenerateInvoiceSunatService;
+use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Session;
@@ -11,6 +15,7 @@ use Storage;
 class MySales extends Component
 {
     use WithPagination;
+    use LivewireAlert;
     public $branchCode;
     public $branch;
     public function render()
@@ -22,11 +27,11 @@ class MySales extends Component
 
         $sales = null;
 
-        if($this->branch){
-            $sales = $this->branch->sales()->orderBy('created_at','desc')->paginate(10);
+        if ($this->branch) {
+            $sales = $this->branch->sales()->orderBy('created_at', 'desc')->paginate(10);
         }
-        return view('livewire.my-sales',[
-            'sales'=>$sales
+        return view('livewire.my-sales', [
+            'sales' => $sales
         ]);
     }
     public function downloadXML($path)
@@ -41,8 +46,27 @@ class MySales extends Component
     {
         return Storage::disk('public')->download($path);
     }
-    public function openDetailOption($saleId){
-      
-        $this->dispatch('openDetail',$saleId);
+    public function openDetailOption($saleId)
+    {
+
+        $this->dispatch('openDetail', $saleId);
+    }
+    public function generateNewVoucher($saleId)
+    {
+
+        try {
+            $sale = Sale::find($saleId);
+            if($sale){
+                $generateInvoiceService = new GenerateInvoiceSunatService();
+                $generateInvoiceService->process($sale);
+            }
+            //$generateDocumentService = new GenerateDocumentService();
+            //$generateDocumentService->createSimpleVoucher($saleId);
+
+            $this->alert('success', 'Voucher generado correctamente');
+
+        } catch (\Throwable $th) {
+            $this->alert('error', 'Ocurrió un error al generar el Voucher: ' . $th->getMessage());
+        }
     }
 }

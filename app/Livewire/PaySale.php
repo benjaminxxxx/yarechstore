@@ -416,9 +416,12 @@ class PaySale extends Component
         $generateInvoiceService = new GenerateInvoiceSunatService();
        
         $response = $generateInvoiceService->process($sale);
-        if($response['sunatResponse']['success']==false){
-            return $this->alert('error',$response['sunatResponse']['error']['code'] . ' - ' . $response['sunatResponse']['error']['message']);
+        if(array_key_exists('sunatResponse',$response)){
+            if($response['sunatResponse']['success']==false){
+                return $this->alert('error',$response['sunatResponse']['error']['code'] . ' - ' . $response['sunatResponse']['error']['message']);
+            }
         }
+        
         //dd($response);
     }
     /*public function verifyInventory()

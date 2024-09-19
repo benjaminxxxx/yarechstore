@@ -138,8 +138,8 @@
         <div class="line"></div>
         <table style="width:100%" cellspacing="5">
             <tr>
-                <th>Cod</th>
-                <th>Descripción</th>
+                <th>N°</th>
+                <th>Descr.</th>
                 <th style="text-align:center">Cant.</th>
                 <th style="text-align:right">P.Unit.</th>
                 <th style="text-align:right">Importe</th>

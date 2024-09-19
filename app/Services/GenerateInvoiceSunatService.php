@@ -31,6 +31,7 @@ class GenerateInvoiceSunatService
         $this->sunatService = new SunatService();
         $this->company = ModelsCompany::firstOrFail();
     }
+    /*
     public function generateDocumentTitle()
     {
         // Definir un título por defecto
@@ -59,8 +60,8 @@ class GenerateInvoiceSunatService
         }
 
         return $text_document;
-    }
-
+    }*/
+/*
     public function createSimpleVoucher($dataClient,$filename = null)
     {
 
@@ -116,7 +117,8 @@ class GenerateInvoiceSunatService
         $document_path = Storage::disk('public')->url($filename);
         $this->sale->document_path = $filename;
         $this->sale->save();
-    }
+    }*/
+    /*
     public function getFileName()
     {
         $idFormatted = 'V' . str_pad($this->sale->id, 8, '0', STR_PAD_LEFT);
@@ -153,7 +155,7 @@ class GenerateInvoiceSunatService
 
         return $filename;
     }
-
+*//*
     public function getTotalPagado($saleId)
     {
         // Obtener los métodos de pago asociados a la venta
@@ -164,6 +166,7 @@ class GenerateInvoiceSunatService
 
         return $totalPagado;
     }
+        */
     public function generateNextCorrelative()
     {
         if ($this->sale->document_code != null)
@@ -230,70 +233,7 @@ class GenerateInvoiceSunatService
         }
 
         if ($this->invoiceType) {
-            /*
-            original
-            
-            $data = [
-                "ublVersion" => "2.1",
-                "tipoDoc" => "01",
-                "tipoOperacion" => "0101",
-                "serie" => "F001",
-                "correlativo" => "1",
-                "fechaEmision" => "2023-07-25T00:00:00-05:00",
-                "formaPago" => [
-                    "moneda" => "PEN",
-                    "tipo" => "Contado"
-                ],
-                "tipoMoneda" => "PEN",
-                "company" => [
-                    "ruc" => 20609278235,
-                    "razonSocial" => "Coders Free S.A.C",
-                    "nombreComercial" => "Coders Free",
-                    "address" => [
-                        "ubigueo" => "150101",
-                        "departamento" => "LIMA",
-                        "provincia" => "LIMA",
-                        "distrito" => "LIMA",
-                        "urbanizacion" => "-",
-                        "direccion" => "Av. Villa Nueva 221",
-                        "codLocal" => "0000"
-                    ]
-                ],
-                "client" => [
-                    "tipoDoc" => "6",
-                    "numDoc" => 20000000001,
-                    "rznSocial" => "EMPRESA X"
-                ],
-                "mtoOperGravadas" => 169.49, // (200 / 1.18) para obtener el subtotal sin IGV
-                "mtoIGV" => 30.51, // 200 - 169.49 para obtener el IGV
-                "totalImpuestos" => 30.51, // Monto total de impuestos (IGV en este caso)
-                "valorVenta" => 169.49, // Valor de la venta sin IGV
-                "subTotal" => 200.00, // Total de la venta con IGV incluido
-                "mtoImpVenta" => 200.00, // Total de la venta con IGV incluido
-                "details" => [
-                    [
-                        "tipAfeIgv" => 10,
-                        "codProducto" => "P001",
-                        "unidad" => "NIU",
-                        "descripcion" => "PRODUCTO 1",
-                        "cantidad" => 2,
-                        "mtoValorUnitario" => 84.74, // (169.49 / 2) para obtener el valor unitario sin IGV
-                        "mtoValorVenta" => 169.49, // Valor total de venta sin IGV
-                        "mtoBaseIgv" => 169.49, // Base imponible para el IGV
-                        "porcentajeIgv" => 18,
-                        "igv" => 30.51, // (200 - 169.49) para obtener el IGV total
-                        "totalImpuestos" => 30.51, // Monto total de impuestos (IGV en este caso)
-                        "mtoPrecioUnitario" => 100.00 // Precio unitario con IGV incluido
-                    ]
-                ],
-                "legends" => [
-                    [
-                        "code" => "1000",
-                        "value" => "SON DOSCIENTOS TREINTA Y SEIS CON 00/100 SOLES"
-                    ]
-                ]
-            ];
-*/
+          
             $this->typeDocument = $this->invoiceType->code;
 
             $data = [
@@ -352,67 +292,7 @@ class GenerateInvoiceSunatService
                 ];
             }
 
-            // 
-
-            /*
-            $data = [
-                "ublVersion" => "2.1",
-                "tipoDoc" => $this->typeDocument,
-                "tipoOperacion" => "0101",
-                "serie" => $this->sale->document_code,
-                "correlativo" => $this->sale->document_correlative,
-                "fechaEmision" => $fechaEmision,
-                "formaPago" => [
-                    "moneda" => "PEN",
-                    "tipo" => "Contado"
-                ],
-                "tipoMoneda" => "PEN",
-
-                "company" => [
-                    "ruc" => 20611263300,
-                    "razonSocial" => "INVERSIONES YARECH S.R.L.",
-                    "nombreComercial" => "-",
-                    "address" => [
-                        "ubigueo" => "040307",
-                        "departamento" => "AREQUIPA",
-                        "provincia" => "CARAVELI",
-                        "distrito" => "CHALA",
-                        "urbanizacion" => "-",
-                        "direccion" => "AV. LAS FLORES MZA. 17 LOTE. 4 A.H.  FLORES",
-                        "codLocal" => "0000"
-                    ]
-                ],
-
-                "client"=> [
-                    "tipoDoc"=> "6",
-                    "numDoc"=> 20000000001,
-                    "rznSocial"=> "EMPRESA X"
-                ],
-
-                "mtoOperGravadas" => $this->sale->subtotal,
-                "mtoIGV" => $this->sale->igv,
-                "totalImpuestos" => $this->sale->igv,
-                "valorVenta" => $this->sale->subtotal,
-                "subTotal" => $this->sale->total_amount,
-                "mtoImpVenta" => $this->sale->total_amount,
-                "details" => $details,
-                "legends" => [
-                    [
-                        "code" => "1000",
-                        "value" => ""
-                    ]
-                ]
-            ];
-            */
-            /*
-                        if($this->sale->customer_id!=null){
-                            $data['client'] = [
-                                "tipoDoc" => (string)$this->sale->customer_document_type,
-                                "numDoc" => $this->sale->customer_document,
-                                "rznSocial" => $this->sale->customer_name
-                            ];
-                        }
-            */
+           
             $this->setTotales($data);
             $this->setLegends($data);
 
@@ -421,62 +301,66 @@ class GenerateInvoiceSunatService
 
             $invoice = $sunat->getInvoice($data);
 
-            $result = $see->send($invoice);
+            if(!$this->sale->cdr_path){
+                $result = $see->send($invoice);
 
-            $response['xml'] = $see->getFactory()->getLastXml();
+                $response['xml'] = $see->getFactory()->getLastXml();
+    
+                $response['hash'] = (new XmlUtils())->getHashSign($response['xml']);
+    
+                $response['sunatResponse'] = $sunat->sunatResponse($result);
 
-            $response['hash'] = (new XmlUtils())->getHashSign($response['xml']);
+                if (isset($response['xml'])) {
 
-            $response['sunatResponse'] = $sunat->sunatResponse($result);
+                    $signed_xml_filename = Carbon::now()->format('Y/m') . '/' . $invoice->getName() . '.xml';
+    
+                    Storage::disk('public')->put($signed_xml_filename, $response['xml']);
+                    $this->sale->signed_xml_path = $signed_xml_filename;
+                    $this->sale->save();
+                }
+    
+                if (isset($response['sunatResponse']['cdrZip'])) {
+    
+                    $filename = Carbon::now()->format('Y/m') . '/' . $invoice->getName() . '.zip';
+    
+                    Storage::disk('public')->put($filename, base64_decode($response['sunatResponse']['cdrZip']));
+                    $this->sale->cdr_path = $filename;
+                    $this->sale->save();
+                }
+    
+                if ($response['sunatResponse']['success'] == true) {
+                    $this->sale->emision_date = Carbon::now()->format('Y/m/d');
+                    if($this->sale->status=='paid'){
+                        $this->sale->pay_date  = Carbon::now()->format('Y/m/d');
+                    }
+                    $this->sale->save();
+                    
+                    $this->createSimpleVoucher($invoice->getName());
+                }else{
+                    $this->createSimpleVoucher();
+                }
+            }else{
+                $this->createSimpleVoucher();
+            }
 
             $htmlInvoice = $sunat->getHtmlReport($invoice);
 
             $this->htmlToPdf($htmlInvoice,$invoice->getName());
 
-            $documentCorrelative = str_pad($this->sale->document_correlative, 6, '0', STR_PAD_LEFT);
+            //$documentCorrelative = str_pad($this->sale->document_correlative, 6, '0', STR_PAD_LEFT);
 
-            if (isset($response['xml'])) {
-
-                $signed_xml_filename = Carbon::now()->format('Y/m') . '/' . $invoice->getName() . '.xml';
-
-                Storage::disk('public')->put($signed_xml_filename, $response['xml']);
-                $this->sale->signed_xml_path = $signed_xml_filename;
-                $this->sale->save();
-            }
-
-            if (isset($response['sunatResponse']['cdrZip'])) {
-
-                $filename = Carbon::now()->format('Y/m') . '/' . $invoice->getName() . '.zip';
-
-                Storage::disk('public')->put($filename, base64_decode($response['sunatResponse']['cdrZip']));
-                $this->sale->cdr_path = $filename;
-                $this->sale->save();
-            }
-
-            if ($response['sunatResponse']['success'] == true) {
-                $this->sale->emision_date = Carbon::now()->format('Y/m/d');
-                if($this->sale->status=='paid'){
-                    $this->sale->pay_date  = Carbon::now()->format('Y/m/d');
-                }
-                $this->sale->save();
-                
-                $this->createSimpleVoucher($data['client'],$invoice->getName());
-            }else{
-                $this->createSimpleVoucher($data['client']);
-            }
+            
         } else {
-            $data = [
-                "client" => [
-                    "tipoDoc" => '1',
-                    "numDoc" => '00000000',
-                    "rznSocial" => 'VARIOS'
-                ]
-            ];
-            $this->createSimpleVoucher($data['client']);
+           
+            $this->createSimpleVoucher();
         }
 
 
         return $response;
+    }
+    public function createSimpleVoucher($invoiceName = null){
+        $generateDocumentService = new GenerateDocumentService();
+        $generateDocumentService->createSimpleVoucher($this->sale->id,$invoiceName);
     }
     public function htmlToPdf($html,$invoiceName){
 

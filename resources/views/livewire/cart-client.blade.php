@@ -1,4 +1,5 @@
 <div>
+    <x-loading wire:loading wire:target="sunat" />
     <div class="flex w-full items-center gap-3 my-3">
         <span>
             CLIENTE:
