@@ -166,7 +166,7 @@
                     <td style="text-align:right; white-space: nowrap;">S/ {{ number_format((double) $igv, 2, '.', ',') }}</td>
                 </tr>
                 <tr>
-                    <td colspan="4" style="text-align:right">Total Pagado:</td>
+                    <td colspan="4" style="text-align:right">Total:</td>
                     <td style="text-align:right; white-space: nowrap;">S/ {{ number_format((double) $total_amount, 2, '.', ',') }}</td>
                 </tr>
                 <tr>
@@ -174,6 +174,30 @@
                         <div class="line"></div>
                     </td>
                 </tr>
+                @if($type=='PORPAGAR')
+                <tr>
+                    <td colspan="4" style="text-align:right">Por pagar:</td>
+                    <td style="text-align:right;  white-space: nowrap;">S/ {{ number_format((double) $total_pagado, 2, '.', ',') }}</td>
+                </tr>
+                @elseif($type=='PARCIALBOLETA')
+                <tr>
+                    <td colspan="4" style="text-align:right">Primer Pago:</td>
+                    <td style="text-align:right;  white-space: nowrap;">S/ {{ number_format((double) $pagado_parcial, 2, '.', ',') }}</td>
+                </tr>
+                <tr>
+                    <td colspan="4" style="text-align:right">Saldo a cuenta:</td>
+                    <td style="text-align:right; white-space: nowrap;">S/ {{ number_format((string) $por_pagar, 2, '.', ',') }}</td>
+                </tr>
+                @elseif($type=='PARCIALFACTURA')
+                <tr>
+                    <td colspan="4" style="text-align:right">Primer Pago:</td>
+                    <td style="text-align:right;  white-space: nowrap;">S/ {{ number_format((double) $pagado_parcial, 2, '.', ',') }}</td>
+                </tr>
+                <tr>
+                    <td colspan="4" style="text-align:right">Saldo a cuenta:</td>
+                    <td style="text-align:right; white-space: nowrap;">S/ {{ number_format((string) $por_pagar, 2, '.', ',') }}</td>
+                </tr>
+                @else
                 <tr>
                     <td colspan="4" style="text-align:right">Efectivo Soles:</td>
                     <td style="text-align:right;  white-space: nowrap;">S/ {{ number_format((double) $total_pagado, 2, '.', ',') }}</td>
@@ -182,6 +206,8 @@
                     <td colspan="4" style="text-align:right">Vuelto:</td>
                     <td style="text-align:right; white-space: nowrap;">S/ {{ number_format((string) $vuelto, 2, '.', ',') }}</td>
                 </tr>
+                @endif
+               
             </tfoot>
         </table>
         <div class="line"></div>

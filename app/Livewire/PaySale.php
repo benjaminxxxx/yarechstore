@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use Carbon\Carbon;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
 use App\Models\Sale;
@@ -31,9 +32,18 @@ class PaySale extends Component
     public $isCashRegisterEnabled;
     public $no_register_change;
     public $currentSale;
+    public $fecha_emision;
+    public $emitFactura;
+    public $emitRecibo;
+    public $emitFacturaAnticipo;
 
     public function mount()
     {
+        $this->emitFactura = true;
+        $this->emitRecibo = true;
+        $this->emitFacturaAnticipo = true;
+        $this->fecha_emision = Carbon::now()->format('Y-m-d');
+
         $this->methods = [
             'cash' => ['icon' => 'fa-money-bill', 'label' => 'Efectivo', 'amount' => '0', 'pretty-amount' => 'S/. 0.00'],
             'card' => ['icon' => 'fa-credit-card', 'label' => 'Tarjeta', 'amount' => '0', 'pretty-amount' => 'S/. 0.00'],
@@ -45,14 +55,18 @@ class PaySale extends Component
         if ($this->branchCode) {
             $this->branch = Branch::where('code', $this->branchCode)->first();
         }
-        $this->document_selected = 'recibo';
+        $this->document_selected = 'boleta';
         $this->isCashRegisterEnabled = env('USE_CASH_REGISTER', false);
         $this->currentSale = Sale::where('code', $this->saleCode)->first();
     }
 
     public function addMethod($methodId)
     {
-        if (!$this->isMethodAdded($methodId)) {
+        if (count($this->methodsAdded) === 1 && isset($this->methodsAdded['cash']) && $this->methodsAdded['cash']['amount'] == 0) {
+            unset($this->methodsAdded['cash']);
+        }
+
+        if (!array_key_exists($methodId, $this->methodsAdded)) {
             if (isset($this->methods[$methodId])) {
                 $this->methodsAdded[$methodId] = $this->methods[$methodId];
                 $this->selectMethod($methodId);
@@ -61,10 +75,7 @@ class PaySale extends Component
             $this->selectMethod($methodId);
         }
     }
-    private function isMethodAdded($methodId)
-    {
-        return array_key_exists($methodId, $this->methodsAdded);
-    }
+   
     public function selectMethod($id)
     {
         $this->selectedMethod = $id;
@@ -93,15 +104,9 @@ class PaySale extends Component
         }
     }
 
-    /**
-     * Formatea un valor numérico en formato decimal (##,#00.00).
-     */
     private function formatAmount($amount)
     {
-        // Convertir el valor a un número flotante
         $numericAmount = floatval($amount);
-
-        // Formatear el número con dos decimales
         return 'S/. ' . number_format($numericAmount, 2, '.', ',');
     }
     public function recalculateChange()
@@ -118,19 +123,15 @@ class PaySale extends Component
     public function pay()
     {
         $this->methodsAdded = [];
-
         $sale = Sale::where('code', $this->saleCode)->first();
-
-        // Verificar si se encontró la venta
+        
         if ($sale) {
             if ($sale->total_amount == 0) {
                 return session()->flash('error', 'Agregue productos al carrito');
             }
-            // Establecer isFormPayOpen en true para abrir el formulario de pago
+            
             $this->isFormPayOpen = true;
             $this->dispatch("loadChart");
-
-            // Actualizar el subtotal con el monto total de la venta
             $this->subtotal = $sale->total_amount;
             $this->addMethod('cash');
             $this->dispatch('saleUpdated');
@@ -145,7 +146,6 @@ class PaySale extends Component
         $this->dispatch('saleUpdated');
         $this->change = 0;
         $this->methodsAdded = [];
-
     }
 
     public function checkMethodAvailable()
@@ -218,19 +218,6 @@ class PaySale extends Component
             $totalReceived = 0;
             $change = $this->change;
 
-            // Actualizar inventario
-            /*foreach ($sale->items as $item) {
-                $inventory = $item->product->inventory;
-
-                // Verificar si hay inventario
-                if ($inventory && $inventory->stock >= $item->quantity) {
-                    $inventory->decrement('stock', $item->quantity);
-                } else {
-                    // Si falla, hacer rollback y mostrar mensaje de error
-                    DB::rollBack();
-                    return session()->flash('error', 'No hay suficiente stock para el producto: ' . $item->product->name);
-                }
-            }*/
             foreach ($sale->items as $item) {
                 $product = $item->product;
 
@@ -242,9 +229,7 @@ class PaySale extends Component
                     // Decrementar el stock considerando el factor
                     $stockInBranch->decrement('stock', $item->quantity * $item->factor);
                 } else {
-                    // Si falla, hacer rollback y mostrar mensaje de error
-                    DB::rollBack();
-                    return $this->alert('error', 'No hay suficiente stock para el producto: ' . $product->name);
+                    throw new \Exception('No hay suficiente stock para el producto: ' . $product->name);
                 }
             }
 
@@ -342,12 +327,26 @@ class PaySale extends Component
                 }
             }
 
+            $generateInvoiceService = new GenerateInvoiceSunatService();
+
+            $options = [
+                'emitFactura' => $this->emitFactura,
+                'emitRecibo' => $this->emitRecibo,
+                'emitFacturaAnticipo' => $this->emitFacturaAnticipo,
+                'fechaEmision' => $this->fecha_emision,
+            ];
+       
+            $response = $generateInvoiceService->process($sale,$options);
+            if(!$response['status']){
+                throw new \Exception($response['message']);
+            }
+
             // Confirmar la transacción
             DB::commit();
 
             // Mostrar mensaje de éxito
             $this->alert('success', 'Venta procesada exitosamente.');
-            $this->generateInvoice($sale);
+            
             $this->backStep();
             $this->dispatch('saleProcessed');
 
@@ -411,19 +410,7 @@ class PaySale extends Component
         return $correlatives->where('invoice_type_id', $invoiceTypeId)->exists();
     }
 
-    public function generateInvoice($sale)
-    {
-        $generateInvoiceService = new GenerateInvoiceSunatService();
-       
-        $response = $generateInvoiceService->process($sale);
-        if(array_key_exists('sunatResponse',$response)){
-            if($response['sunatResponse']['success']==false){
-                return $this->alert('error',$response['sunatResponse']['error']['code'] . ' - ' . $response['sunatResponse']['error']['message']);
-            }
-        }
-        
-        //dd($response);
-    }
+   
     /*public function verifyInventory()
     {
         $sale = Sale::where('code', $this->saleCode)->first();

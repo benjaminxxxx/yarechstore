@@ -23,9 +23,88 @@
                                 <livewire:cart-client :saleCode="$currentSale->code"
                                     wire:key="client-pay-sale-{{ $currentSale->code }}" />
                             </div>
+                            <div class="p-2 md:py-2 px-5">
+                                <x-label value="Fecha de emisión" />
+                                <div x-data x-init="flatpickr($refs.datepicker, {
+                                    dateFormat: 'Y-m-d',
+                                    maxDate: '{{ now()->format('Y-m-d') }}',
+                                    minDate: '{{ now()->subDays(2)->format('Y-m-d') }}',
+                                    disable: [
+                                        function(date) {
+                                            // Deshabilitar todas las fechas que no están en el rango
+                                            return date > new Date() || date < new Date().fp_incr(-2);
+                                        }
+                                    ],
+                                    onChange: function(selectedDates, dateStr, instance) {
+                                        @this.set('fecha_emision', dateStr);
+                                    }
+                                });">
+                                    <x-input type="text" x-ref="datepicker" value="{{$fecha_emision}}" class="form-input"
+                                        placeholder="Seleccionar fecha" />
+                                </div>
+                            </div>
+                            <div class="p-2 md:py-2 px-5">
+                                @if ($document_selected == 'factura' || $document_selected == 'boleta')
+
+                                    @php
+                                        // Extraer los métodos con amount mayor a cero
+                                        $paymentMethods = collect($methodsAdded)->filter(function ($method, $key) {
+                                            return $method['amount'] > 0 && $key !== 'client';
+                                        });
+
+                                        // Revisar si hay método cliente con monto mayor a cero
+                                        $hasClient =
+                                            array_key_exists('client', $methodsAdded) &&
+                                            $methodsAdded['client']['amount'] > 0;
+                                        $hasOtherThanClient = $paymentMethods->count() > 0; // Verifica si hay otros métodos con monto
+                                    @endphp
+
+                                    @if (!$hasClient)
+                                        {{-- Caso en que no hay método "client", emitir la factura completa --}}
+                                        <x-label
+                                            value="Se va a generar una factura electrónica por el monto de S/. {{ $currentSale->total_amount }} soles" />
+                                    @else
+                                        {{-- Caso en que solo se ha seleccionado "client" --}}
+                                        @if ($hasClient && !$hasOtherThanClient)
+                                            <x-label
+                                                value="El monto ha sido cargado a la cuenta del cliente. ¿Desea emitir la factura ahora?" />
+
+                                            <div class="block my-5">
+                                                <label for="emitFactura" class="flex items-center">
+                                                    <x-checkbox id="emitFactura" wire:model="emitFactura" />
+                                                    <span class="ms-2 text-sm">Emitir {{$document_selected == 'factura'?'Factura':'Boleta'}}</span>
+                                                </label>
+                                            </div>
+                                            <div class="block my-5">
+                                                <label for="emitRecibo3" class="flex items-center">
+                                                    <x-checkbox id="emitRecibo3" wire:model="emitRecibo" />
+                                                    <span class="ms-2 text-sm">Emitir Recibo de Pago</span>
+                                                </label>
+                                            </div>
+                                        @else
+                                            {{-- Caso en que hay otros métodos de pago además de "client" --}}
+                                            <x-label
+                                                value="Hay un adelanto por S/. {{ $paymentMethods->sum('amount') }} soles. ¿Desea emitir una factura de anticipo?" />
+
+                                            <div class="block my-5">
+                                                <label for="emitFacturaAnticipo" class="flex items-center">
+                                                    <x-checkbox id="emitFacturaAnticipo" wire:model="emitFacturaAnticipo" />
+                                                    <span class="ms-2 text-sm">Emitir {{$document_selected == 'factura'?'Factura':'Boleta'}} de Anticipo</span>
+                                                </label>
+                                            </div>
+                                            <div class="block my-5">
+                                                <label for="emitRecibo2" class="flex items-center">
+                                                    <x-checkbox id="emitRecibo2" wire:model="emitRecibo" />
+                                                    <span class="ms-2 text-sm">Emitir Recibo de Pago</span>
+                                                </label>
+                                            </div>
+                                        @endif
+                                    @endif
+                                @endif
+                            </div>
                         @endif
                     @endif
-                  
+
                 </div>
             </div>
 
@@ -60,9 +139,9 @@
                                             </x-label>
                                             <x-input type="text"
                                                 wire:model.live="methodsAdded.{{ $id }}.amount"
-                                                x-ref="amountInput"
-                                                x-bind:focus="$refs.input{{ $selectedMethod }}.focus()"
-                                                x-on:focus="$refs.amountInput.select()" />
+                                                x-ref="amountInput{{ $selectedMethod }}"
+                                                x-bind:focus="$refs.amountInput{{ $selectedMethod }}.focus()"
+                                                x-on:focus="$refs.amountInput{{ $selectedMethod }}.select()" />
                                             <button wire:click.stop="removeMethod('{{ $id }}')"
                                                 class="text-red-600 ml-10">
                                                 <i class="fa fa-times"></i>
@@ -114,17 +193,17 @@
                         @endif
                         <div class="mt-10">
                             <div class="flex items-center mb-4">
-                                <x-radio id="document_selected-1" value="boleta" wire:model="document_selected" />
+                                <x-radio id="document_selected-1" value="boleta" wire:model.live="document_selected" />
                                 <x-label for="document_selected-1" class="ms-2 !mb-0" value="Boleta" />
                             </div>
                             <div class="flex items-center mb-4">
-                                <x-radio id="document_selected-2" value="factura" wire:model="document_selected" />
+                                <x-radio id="document_selected-2" value="factura" wire:model.live="document_selected" />
                                 <x-label for="document_selected-2" class="ms-2 !mb-0" value="Factura" />
                             </div>
-                            <div class="flex items-center mb-4">
-                                <x-radio id="document_selected-4" value="recibo" wire:model="document_selected" />
+                            <!--<div class="flex items-center mb-4">
+                                <x-radio id="document_selected-4" value="recibo" wire:model.live="document_selected" />
                                 <x-label for="document_selected-4" class="ms-2 !mb-0" value="Recibo" />
-                            </div>
+                            </div>-->
 
                         </div>
                     </div>

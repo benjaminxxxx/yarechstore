@@ -43,15 +43,13 @@
                 <div class="grid grid-cols-12 gap-10">
                     @if ($resultsProduct && $resultsProduct->count() > 0)
                         @foreach ($resultsProduct as $item)
-                            
-
                             @if ($item->presentations && $item->presentations->count() > 0)
                                 <!-- Mostrar presentaciones disponibles -->
                                 <x-product-card-presentation :photoUrl="$item->photo_url" :name="$item->name" :finalPrice="$item->final_price"
                                     :presentations="$item->presentations" :code="$item->code" />
                             @else
-                            <x-product-card wire:click="addToCart('{{ $item->code }}')" :photoUrl="$item->photo_url"
-                                :name="$item->name" :finalPrice="$item->final_price" />
+                                <x-product-card wire:click="addToCart('{{ $item->code }}')" :photoUrl="$item->photo_url"
+                                    :name="$item->name" :finalPrice="$item->final_price" />
                             @endif
                         @endforeach
                     @endif
@@ -192,7 +190,26 @@
             <div class="mt-auto">
                 <x-spacing>
 
-                    @if ($currentSale && $currentSale->status == 'paid')
+                    @if ($currentSale && ($currentSale->status == 'paid' || $currentSale->status == 'debt'))
+                        @if ($currentSale->prepayments->count() > 0)
+                            @foreach ($currentSale->prepayments as $prepayment)
+                                <div class="flex items-center my-2 gap-2">
+                                    
+                                    @if ($prepayment->hasDocumentVoucher)
+                                        <x-button-a target="_blank" href="{{ $prepayment->hasDocumentVoucher }}">
+                                            Anticipo {{ $prepayment->related_doc_type }} -
+                                            {{ $prepayment->related_doc_number }}
+                                        </x-button-a>
+                                    @endif
+                                    @if ($prepayment->hasDocument)
+                                        <x-button-a target="_blank" href="{{ $prepayment->hasDocument }}">
+                                            Anticipo {{ $prepayment->related_doc_type }} -
+                                            {{ $prepayment->related_doc_number }} A4
+                                        </x-button-a>
+                                    @endif
+                                </div>
+                            @endforeach
+                        @endif
                         @if ($currentSale->document_path)
                             @php
                                 $buttonLabel = '';
@@ -215,18 +232,25 @@
                                 </x-button-a>
 
                                 @php
-                                    // Ruta del archivo original
+                                    // Versiones anteriores
                                     $originalFilePath = 'uploads/' . $currentSale->document_path;
+                                    $officialFilePath =
+                                        'uploads/' . str_replace('.pdf', '_oficial.pdf', $currentSale->document_path);
 
-                                    // Ruta del archivo oficial
-                                    $officialFilePath = 'uploads/' . str_replace('.pdf', '_oficial.pdf', $currentSale->document_path);
+                                    $newPathOficial = 'uploads/' . $currentSale->xml_path;
                                 @endphp
 
-                                @if (file_exists(public_path($officialFilePath)))
-                                    <x-button-a target="_blank"
-                                        href="{{ asset($officialFilePath) }}">
-                                        {{ $buttonLabel }} A4
-                                    </x-button-a>
+                                @if (file_exists(public_path($officialFilePath)) || file_exists(public_path($newPathOficial)))
+
+                                    @if (file_exists(public_path($newPathOficial)))
+                                        <x-button-a target="_blank" href="{{ asset($newPathOficial) }}">
+                                            {{ $buttonLabel }} A4
+                                        </x-button-a>
+                                    @elseif (file_exists(public_path($officialFilePath)))
+                                        <x-button-a target="_blank" href="{{ asset($officialFilePath) }}">
+                                            {{ $buttonLabel }} A4
+                                        </x-button-a>
+                                    @endif
                                 @endif
                             @endif
                         @endif

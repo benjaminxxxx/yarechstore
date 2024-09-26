@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\InvoicesType;
+use App\Models\Prepayment;
 use App\Models\Sale;
 use App\Models\Company as ModelsCompany;
 use App\Models\PaymentMethod;
@@ -59,7 +60,7 @@ class GenerateDocumentService
         return $text_document;
     }
 
-    public function createSimpleVoucher($saleId,$invoiceName = null)
+    public function createSimpleVoucher($saleId,$type,$options = [])
     {
         $this->sale = Sale::find($saleId);
 
@@ -69,11 +70,16 @@ class GenerateDocumentService
 
         $itemsFromSale = $this->sale->items()->get();
         $filename = null;
+        $invoiceName = isset($options['invoice_name'])?$options['invoice_name']:null;
+        $anticipo = isset($options['anticipo'])?$options['anticipo']:null;
+        $anticipo_id = isset($options['anticipo_id'])?$options['anticipo_id']:null;
+
         if($invoiceName){
             $filename = Carbon::now()->format('Y/m') . '/' . $invoiceName . '.pdf';
         }else{
             $filename = $this->sale->document_path; //2024/08/Boleta_B001_0000002_voucher.pdf || 2024/08/V00002_voucher.pdf
         }
+
         $items = [];
 
         foreach ($itemsFromSale as $item) {
@@ -89,10 +95,61 @@ class GenerateDocumentService
                 'total' => (float) $item->total_price, // Total del producto
             ];
         }
+        
+        $title = "";
+        
+        if($type=='NORMAL'){
+            $title = $this->generateDocumentTitle();
+        }
+        if($type=='PORPAGAR'){
+            $title = "VOUCHER DE VENTA POR PAGAR";
+        }
 
+        $primerPago = 0;
+        $porpagar = 0;
+        $totalPagado = $this->getTotalPagado($this->sale->id);
+        $vuelto = $this->sale->cash;
+
+        if($type=='PARCIALBOLETA'){
+            $title = "VOUCHER DE BOLETA CON PAGO PARCIAL";
+            
+
+
+            $methodsAddedObject = PaymentMethod::where('sale_id', $this->sale->id)->get();
+
+            if ($methodsAddedObject->count() > 0) {
+                $methodsAdded = $methodsAddedObject->keyBy('method')->toArray();
+                
+                $paymentMethods = collect($methodsAdded)->filter(function ($method, $key) {
+                    return $method['amount'] > 0 && $key !== 'client';
+                });
+                $primerPago = $paymentMethods->sum('amount');
+                $porpagar = $totalPagado-$vuelto-$primerPago;
+                
+            }
+        }
+        if($type=='PARCIALFACTURA'){
+            $title = "VOUCHER DE FACTURA CON PAGO PARCIAL";
+            
+
+
+            $methodsAddedObject = PaymentMethod::where('sale_id', $this->sale->id)->get();
+
+            if ($methodsAddedObject->count() > 0) {
+                $methodsAdded = $methodsAddedObject->keyBy('method')->toArray();
+                
+                $paymentMethods = collect($methodsAdded)->filter(function ($method, $key) {
+                    return $method['amount'] > 0 && $key !== 'client';
+                });
+                $primerPago = $paymentMethods->sum('amount');
+                $porpagar = $totalPagado-$vuelto-$primerPago;
+                
+            }
+        }
+        
 
         $data = [
-            'text_document' => $this->generateDocumentTitle(),
+            'text_document' => $title,
             'date' => Date('d/m/Y'),
             'company_name' => $this->company->name,
             'company_ruc' => $this->company->ruc,
@@ -101,9 +158,13 @@ class GenerateDocumentService
             'op_gravada' => $this->sale->subtotal,
             'igv' => $this->sale->igv,
             'total_amount' => $this->sale->total_amount,
-            'total_pagado' => $this->getTotalPagado($this->sale->id),
-            'vuelto' => $this->sale->cash
+            'total_pagado' => $totalPagado,
+            'vuelto' => $vuelto,
+            'type'=>$type,
+            'pagado_parcial'=>$primerPago,
+            'por_pagar'=>$porpagar
         ];
+        
 
         if ($this->sale->customer_id != null) {
             $data['client'] = [
@@ -132,8 +193,19 @@ class GenerateDocumentService
         }
 
         Storage::disk('public')->put($filename, $pdf->output());
-        $this->sale->document_path = $filename;
-        $this->sale->save();
+        if($type=='PARCIALFACTURA' || $type=='PARCIALBOLETA'){
+            if($anticipo && $anticipo_id){
+                $prepayment = Prepayment::find($anticipo_id);
+                if($prepayment){
+                    $prepayment->document_path = $filename;
+                    $prepayment->save();
+                }
+            }
+        }else{
+            $this->sale->document_path = $filename;
+            $this->sale->save();
+        }
+        
     }
     public function getFileName()
     {

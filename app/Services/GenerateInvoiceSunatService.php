@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\InvoicesType;
+use App\Models\Prepayment;
 use App\Models\Sale;
 use App\Models\Company as ModelsCompany;
 use App\Models\PaymentMethod;
@@ -17,6 +18,7 @@ use Luecano\NumeroALetras\NumeroALetras;
 use Greenter\Report\XmlUtils;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class GenerateInvoiceSunatService
 {
@@ -31,142 +33,7 @@ class GenerateInvoiceSunatService
         $this->sunatService = new SunatService();
         $this->company = ModelsCompany::firstOrFail();
     }
-    /*
-    public function generateDocumentTitle()
-    {
-        // Definir un título por defecto
-        $text_document = 'RECIBO DE VENTA';
 
-        // Obtener el tipo de documento de la venta
-        $this->invoiceType = InvoicesType::find($this->sale->invoice_type_id);
-
-        if ($this->invoiceType) {
-            $this->typeDocument = $this->invoiceType->code;
-            // Definir el prefijo según el código del tipo de documento
-            switch ($this->typeDocument) {
-                case '01':
-                    $text_document = "FACTURA DE VENTA ELECTRONICA";
-                    break;
-                case '03':
-                    $text_document = "BOLETA DE VENTA ELECTRONICA";
-                    break;
-            }
-
-            // Si se encuentra un prefijo válido, añadir la numeración
-            if ($text_document !== 'RECIBO DE VENTA') {
-                $numerocorrelativo = str_pad($this->sale->document_correlative, 8, '0', STR_PAD_LEFT);
-                $text_document .= " {$this->sale->document_code} - {$numerocorrelativo}";
-            }
-        }
-
-        return $text_document;
-    }*/
-/*
-    public function createSimpleVoucher($dataClient,$filename = null)
-    {
-
-        $itemsFromSale = $this->sale->items;
-        $items = [];
-
-        foreach ($itemsFromSale as $item) {
-            // Agregar el ítem al array de items con el formato deseado
-            $items[] = [
-                'code' => sprintf('P%03d', $item->product_id), // Generar código basado en el ID del producto
-                'description' => $item->product_name, // Descripción del producto
-                'quantity' => $item->quantity, // Cantidad del producto
-                'unit_price' => (float) $item->product_price, // Precio unitario del producto
-                'discount' => 0.00, // No hay descuento según los datos proporcionados
-                'subtotal' => (float) $item->subtotal, // Subtotal del producto
-                'igv' => (float) $item->igv, // IGV del producto
-                'total' => (float) $item->total_price, // Total del producto
-            ];
-        }
-
-
-        $data = [
-            'text_document' => $this->generateDocumentTitle(),
-            'date' => Date('d/m/Y'),
-            'company_name' => $this->company->name,
-            'company_ruc' => $this->company->ruc,
-            'company_address' => $this->company->address,
-            'items' => $items,
-            'op_gravada' => $this->sale->subtotal,
-            'igv' => $this->sale->igv,
-            'total_amount' => $this->sale->total_amount,
-            'total_pagado' => $this->getTotalPagado($this->sale->id),
-            'vuelto' => $this->sale->cash,
-            'client'=>$dataClient
-        ];
-
-
-        // Renderizar la vista y generar el PDF
-        $pdf = Pdf::loadView('documents.boleta', $data);
-
-        $width = 80 / 25.4 * 72; // Convertir 80 mm a puntos
-        $height = 200 / 25.4 * 72; // Longitud de 300 mm convertida a puntos (ajústala según la necesidad)
-        $pdf->setPaper([0, 0, $width, $height], 'portrait');
-
-
-        if (!$filename) {
-            $filename = $this->getFileName();
-        } else {
-            $filename = Carbon::now()->format('Y/m') . '/' . $filename . '.pdf';
-        }
-
-        Storage::disk('public')->put($filename, $pdf->output());
-        $document_path = Storage::disk('public')->url($filename);
-        $this->sale->document_path = $filename;
-        $this->sale->save();
-    }*/
-    /*
-    public function getFileName()
-    {
-        $idFormatted = 'V' . str_pad($this->sale->id, 8, '0', STR_PAD_LEFT);
-
-        // Formato de fecha: YYYY/MM
-        $filename = Carbon::now()->format('Y/m') . '/';
-
-        // Obtener el tipo de documento (factura o boleta)
-        $this->invoiceType = InvoicesType::find($this->sale->invoice_type_id);
-
-        if ($this->invoiceType) {
-            $idFormatted = '';
-
-            // Definir el prefijo del nombre del archivo según el tipo de documento
-            if ($this->invoiceType->code == '01') {
-                $filename .= 'Factura_';
-            } elseif ($this->invoiceType->code == '03') {
-                $filename .= 'Boleta_';
-            }
-
-            // Agregar el código del documento (por ejemplo, F001-)
-            if ($this->sale->document_code) {
-                $filename .= $this->sale->document_code . '_';
-            }
-
-            // Agregar el correlativo del documento, formateado a 7 dígitos (por ejemplo, 0000001)
-            if ($this->sale->document_correlative) {
-                $filename .= str_pad($this->sale->document_correlative, 7, '0', STR_PAD_LEFT);
-            }
-        }
-
-        // Añadir el sufijo de voucher y la extensión PDF
-        $filename .= $idFormatted . '_voucher.pdf';
-
-        return $filename;
-    }
-*//*
-    public function getTotalPagado($saleId)
-    {
-        // Obtener los métodos de pago asociados a la venta
-        $paymentMethods = PaymentMethod::where('sale_id', $saleId)->get();
-
-        // Sumar los montos de todos los métodos de pago
-        $totalPagado = $paymentMethods->sum('amount');
-
-        return $totalPagado;
-    }
-        */
     public function generateNextCorrelative()
     {
         if ($this->sale->document_code != null)
@@ -189,6 +56,7 @@ class GenerateInvoiceSunatService
             $correlative->save();
         }
     }
+    /*
     public function process(Sale $sale)
     {
 
@@ -357,12 +225,487 @@ class GenerateInvoiceSunatService
 
 
         return $response;
+    }*/
+    public function process(Sale $sale, $options = [])
+    {
+        $response = [];
+        $this->sale = $sale;
+        $this->invoiceType = InvoicesType::find($this->sale->invoice_type_id);
+
+        $emitFactura = isset($options['emitFactura']) ? $options['emitFactura'] : true;
+        $emitRecibo = isset($options['emitRecibo']) ? $options['emitRecibo'] : true;
+        $emitFacturaAnticipo = isset($options['emitFacturaAnticipo']) ? $options['emitFacturaAnticipo'] : false;
+
+
+        try {
+            if (!isset($options['fechaEmision'])) {
+                throw new \Exception("Debe Ingresar una Fecha de Emosión Válida");
+            }
+
+            $fechaEmision = $options['fechaEmision'];
+
+            if ($this->sale->status == 'paid') {
+
+                $optionsVoucher = [];
+
+                if ($emitFactura) {
+
+                    $options = [
+                        'sale_id' => $this->sale->id,
+                        'fecha' => $fechaEmision
+                    ];
+
+                    $responseInvoice = $this->createInvoice($options);
+
+                    if (!$responseInvoice['status']) {
+                        throw new \Exception($responseInvoice['message']);
+                    }
+
+                    $optionsVoucher['invoice_name'] = isset($responseInvoice['invoice_name'])?$responseInvoice['invoice_name']:null;
+                    $optionsVoucher['anticipo'] = isset($responseInvoice['anticipo'])?$responseInvoice['anticipo']:false;
+                    $optionsVoucher['anticipo_id'] = isset($responseInvoice['anticipo_id'])?$responseInvoice['anticipo_id']:null;
+                }
+
+                if ($emitRecibo) {
+                    $this->createSimpleVoucher("NORMAL",$optionsVoucher);
+                }
+
+                $this->sale->pay_date  = Carbon::now()->format('Y/m/d');
+                $this->sale->save();
+
+                $response['status'] = true;
+
+            } elseif ($this->sale->status == 'debt') {
+                $response['status'] = true;
+                $methodsAddedObject = PaymentMethod::where('sale_id', $sale->id)->get();
+
+                if ($methodsAddedObject->count() > 0) {
+                    $methodsAdded = $methodsAddedObject->keyBy('method')->toArray();
+
+                    $paymentMethods = collect($methodsAdded)->filter(function ($method, $key) {
+                        return $method['amount'] > 0 && $key !== 'client';
+                    });
+
+                    // Revisar si hay método cliente con monto mayor a cero
+                    $hasClient =
+                        array_key_exists('client', $methodsAdded) &&
+                        $methodsAdded['client']['amount'] > 0;
+                    $hasOtherThanClient = $paymentMethods->count() > 0;
+
+                    $anticipo_amount = $paymentMethods->sum('amount');
+
+                    if ($hasClient) {
+                        if (!$hasOtherThanClient) {
+                            $optionsVoucher = [];
+                            if ($emitFactura) {
+                                $options = [
+                                    'sale_id' => $this->sale->id,
+                                    'fecha' => $fechaEmision
+                                ];
+
+                                $responseInvoice = $this->createInvoice($options);
+
+                                if (!$responseInvoice['status']) {
+                                    throw new \Exception($responseInvoice['message']);
+                                }
+
+                                $optionsVoucher['invoice_name'] = isset($responseInvoice['invoice_name'])?$responseInvoice['invoice_name']:null;
+                                $optionsVoucher['anticipo'] = isset($responseInvoice['anticipo'])?$responseInvoice['anticipo']:false;
+                                $optionsVoucher['anticipo_id'] = isset($responseInvoice['anticipo_id'])?$responseInvoice['anticipo_id']:null;
+
+                            }else{
+                                $prepayment = Prepayment::create([
+                                    'sale_id' => $this->sale->id,
+                                    'amount' => $anticipo_amount,
+                                    'related_doc_type' => null,
+                                    'related_doc_number' => null,
+                                    'total' => $this->sale->total_amount,
+                                    'signed_xml_file' => null,
+                                    'cdr_file' => null,
+                                ]);
+                                if($prepayment){
+                                    $optionsVoucher['anticipo'] = true;
+                                    $optionsVoucher['anticipo_id'] = $prepayment->id;
+                                }
+                            }
+                            if ($emitRecibo) {
+
+                                $optionsVoucher['title'] = "RECIBO DE VENTA POR PAGAR";
+                                $this->createSimpleVoucher("PORPAGAR", $optionsVoucher);
+                            }
+                        } else {
+                            //Factura como acnticipo
+                            //voucher mas
+                            
+                            $this->typeDocument = $this->invoiceType->code;
+                            $optionsVoucher = [];
+
+                            if($emitFacturaAnticipo){
+                                $options = [
+                                    'sale_id' => $this->sale->id,
+                                    'listItems' => false,
+                                    'description' => 'PRIMER PAGO DE VENTA',
+                                    'anticipo' => true,
+                                    'anticipo_amount' => $anticipo_amount,
+                                    'fecha' => $fechaEmision
+
+                                ];
+                                $responseInvoice = $this->createInvoice($options);
+                                if (!$responseInvoice['status']) {
+                                    throw new \Exception($responseInvoice['message']);
+                                }
+                                $optionsVoucher['invoice_name'] = isset($responseInvoice['invoice_name'])?$responseInvoice['invoice_name']:null;
+                                $optionsVoucher['anticipo'] = isset($responseInvoice['anticipo'])?$responseInvoice['anticipo']:false;
+                                $optionsVoucher['anticipo_id'] = isset($responseInvoice['anticipo_id'])?$responseInvoice['anticipo_id']:null;
+                                
+                            }else{
+                                $prepayment = Prepayment::create([
+                                    'sale_id' => $this->sale->id,
+                                    'amount' => $anticipo_amount,
+                                    'related_doc_type' => null,
+                                    'related_doc_number' => null,
+                                    'total' => $this->sale->total_amount,
+                                    'signed_xml_file' => null,
+                                    'cdr_file' => null,
+                                ]);
+                                if($prepayment){
+                                    $optionsVoucher['anticipo'] = true;
+                                    $optionsVoucher['anticipo_id'] = $prepayment->id;
+                                }
+                            }
+
+                            if ($this->typeDocument == '01') {
+                                
+                                if ($emitRecibo) {
+                                    $this->createSimpleVoucher("PARCIALFACTURA",$optionsVoucher);
+                                }
+                            }
+                            if ($this->typeDocument == '03') {
+                               
+                                if ($emitRecibo) {
+                                    $this->createSimpleVoucher("PARCIALBOLETA",$optionsVoucher);
+                                }
+                            }
+
+                        }
+                    }
+                }
+
+            }
+
+        } catch (\Throwable $th) {
+            $response = [
+                'message' => $th->getMessage(),
+                'status' => false,
+            ];
+        }
+
+        return $response;
     }
-    public function createSimpleVoucher($invoiceName = null){
+    public function createSimpleVoucher($type = "NORMAL", $options)
+    {
         $generateDocumentService = new GenerateDocumentService();
-        $generateDocumentService->createSimpleVoucher($this->sale->id,$invoiceName);
+        $generateDocumentService->createSimpleVoucher($this->sale->id, $type, $options);
     }
-    public function htmlToPdf($html,$invoiceName){
+    public function createInvoice($options)
+    {
+
+        $response = [];
+        $correlative = null;
+
+        try {
+
+            if (!isset($options['sale_id'])) {
+                throw new \Exception("El id de la Venta es Obligatorio");
+            }
+            if (!isset($options['fecha'])) {
+                throw new \Exception("El atributo Fecha es Obligatorio");
+            }
+
+            $sale = Sale::find($options['sale_id']);
+            $serie = '';
+            $nextCorrelative = '';
+            $listItems = isset($options['listItems']) ? $options['listItems'] : true;
+
+            $anticipo = isset($options['anticipo']) ? $options['anticipo'] : false;
+            $fecha = $options['fecha'];
+            $anticipo_amount = 0;
+
+            if ($anticipo) {
+                if (!isset($options['anticipo_amount'])) {
+                    throw new \Exception("Se necesita saber el monto del anticipo.");
+                } else {
+                    $anticipo_amount = $options['anticipo_amount'];
+                }
+                if (!isset($options['description'])) {
+                    throw new \Exception("Se necesita saber la descripción del anticipo.");
+                }
+            }
+
+            if (!$sale) {
+                throw new \Exception("La Venta No Existe");
+            }
+
+            $invoiceType = InvoicesType::find($sale->invoice_type_id);
+
+            if (!$invoiceType) {
+                throw new \Exception("No Existe el Registro Tipo de Documento");
+            }
+
+            if ($sale->document_code != null) {
+                $serie = $sale->document_code;
+                $nextCorrelative = $sale->document_correlative;
+            } else {
+                $correlative = Correlative::where('invoice_type_id', $sale->invoice_type_id)->where('branch_id', $sale->branch_id)->first();
+                if (!$correlative) {
+                    throw new \Exception("No hay Correlativo Registrado para la operación");
+                }
+
+                $serie = $correlative->series;
+                $nextCorrelative = $correlative->current_correlative + 1;
+
+
+            }
+
+            $date = new DateTime($fecha, new \DateTimeZone('America/Lima'));
+            $date->setTime(date('H'), date('i'), date('s'));
+            $fechaEmision = $date->format('Y-m-d\TH:i:sP');
+
+
+            $details = [];
+
+
+            if ($listItems) {
+                $itemsFromSale = $this->sale->items;
+
+                foreach ($itemsFromSale as $item) {
+                    // Calcular los valores necesarios
+                    $mtoValorUnitario = (float) $item['unit_value'];
+                    $mtoBaseIgv = (float) $item['subtotal'];
+                    $porcentajeIgv = (float) $item['percent_igv'];
+                    $igv = (float) $item['igv'];
+                    $total_taxes = (float) $item['total_taxes']; // IGV calculado previamente
+                    $mtoValorVenta = (float) $mtoBaseIgv; // Generalmente igual al subtotal
+                    $mtoPrecioUnitario = (float) $item['product_price']; // Precio unitario con IGV
+
+                    // Añadir el detalle del ítem al array de detalles
+                    $details[] = [
+                        "tipAfeIgv" => 10, // Tipo de afectación del IGV (10 = Gravado - Operación Onerosa)
+                        "codProducto" => sprintf('P%03d', $item->product_id), // Código del producto
+                        "unidad" => "NIU", // Unidad de medida (ejemplo: "NIU" = Unidad)
+                        "descripcion" => $item['product_name'], // Descripción del producto
+                        "cantidad" => $item['quantity'], // Cantidad de productos
+                        "mtoValorUnitario" => $mtoValorUnitario, // Monto valor unitario sin IGV
+                        "mtoValorVenta" => $mtoValorVenta, // Monto de la venta sin IGV
+                        "mtoBaseIgv" => $mtoBaseIgv, // Base imponible para el IGV
+                        "porcentajeIgv" => $porcentajeIgv, // Porcentaje de IGV aplicado
+                        "igv" => $igv, // Monto del IGV
+                        "totalImpuestos" => $total_taxes, // Total de impuestos (en este caso, solo IGV)
+                        "mtoPrecioUnitario" => $mtoPrecioUnitario // Monto del precio unitario con IGV
+                    ];
+                }
+            } else {
+                if ($anticipo) {
+                    // Detalle para un anticipo
+                    $anticipoAmount = (float) $options['anticipo_amount']; // Monto del anticipo con IGV
+                    $anticipoDescription = $options['description'] ?? 'Adelanto'; // Descripción del anticipo
+
+                    // Calcular el monto sin IGV (subtotal) dividiendo entre 1.18
+                    $mtoBaseIgv = $anticipoAmount / 1.18;
+                    $igv = $anticipoAmount - $mtoBaseIgv; // IGV es la diferencia entre el total y el subtotal
+
+                    // El detalle del anticipo en el comprobante
+                    $details[] = [
+                        "tipAfeIgv" => 10, // Tipo de afectación del IGV (10 = Gravado - Operación Onerosa)
+                        "codProducto" => "ANTICIPO", // Código del producto o anticipo
+                        "unidad" => "NIU", // Unidad de medida
+                        "descripcion" => $anticipoDescription, // Descripción del anticipo
+                        "cantidad" => 1, // El anticipo es único, por lo que la cantidad es 1
+                        "mtoValorUnitario" => $mtoBaseIgv, // El valor del anticipo sin IGV
+                        "mtoValorVenta" => $mtoBaseIgv, // El monto del adelanto sin IGV
+                        "mtoBaseIgv" => $mtoBaseIgv, // Base imponible para el IGV
+                        "porcentajeIgv" => 18, // El porcentaje de IGV (18%)
+                        "igv" => $igv, // Monto del IGV (18% del subtotal)
+                        "totalImpuestos" => $igv, // Total de impuestos (solo IGV)
+                        "mtoPrecioUnitario" => $anticipoAmount // Monto con IGV incluido (monto total)
+                    ];
+
+
+                }
+            }
+
+
+            $typeDocument = $invoiceType->code;
+
+            $data = [
+                "ublVersion" => "2.1",
+                "tipoDoc" => $typeDocument,
+                "tipoOperacion" => $anticipo ? "0101" : "0101", //por el momento no se puede utilizar 0104 como indica la regulacion de la sunat
+                "serie" => $serie,
+                "correlativo" => $nextCorrelative,
+                "fechaEmision" => $fechaEmision,
+                "formaPago" => [
+                    "moneda" => "PEN",
+                    "tipo" => "Contado"
+                ],
+                "tipoMoneda" => "PEN",
+
+                "company" => [
+                    "ruc" => 20611263300,
+                    "razonSocial" => "INVERSIONES YARECH S.R.L.",
+                    "nombreComercial" => "-",
+                    "address" => [
+                        "ubigueo" => "040307",
+                        "departamento" => "AREQUIPA",
+                        "provincia" => "CARAVELI",
+                        "distrito" => "CHALA",
+                        "urbanizacion" => "-",
+                        "direccion" => "AV. LAS FLORES MZA. 17 LOTE. 4 A.H.  FLORES",
+                        "codLocal" => "0000"
+                    ]
+                ],
+
+                "client" => [
+                    "tipoDoc" => '1',
+                    "numDoc" => '00000000',
+                    "rznSocial" => 'VARIOS'
+                ],
+
+                "mtoOperGravadas" => (float) $sale->subtotal,
+                "mtoIGV" => (float) $sale->igv,
+                "totalImpuestos" => (float) $sale->igv,
+                "valorVenta" => (float) $sale->subtotal,
+                "subTotal" => (float) $sale->total_amount,
+                "mtoImpVenta" => (float) $sale->total_amount,
+                "details" => $details,
+                "legends" => [
+                    [
+                        "code" => "1000",
+                        "value" => ""
+                    ]
+                ]
+            ];
+
+
+            if ($this->sale->customer_id != null) {
+                $data['client'] = [
+                    "tipoDoc" => (string) $sale->customer_document_type,
+                    "numDoc" => $sale->customer_document,
+                    "rznSocial" => $sale->customer_name
+                ];
+            }
+
+            if ($anticipo) {
+                $data['operGravadas'] = $mtoBaseIgv;
+                $data['igvAmount'] = $igv;
+                $data['totalImpuestos'] = $igv;
+                $data['valorVenta'] = $mtoBaseIgv;
+                $data['subTotal'] = $anticipoAmount;
+                $data['mtoImpVenta'] = $anticipoAmount;
+            }
+
+
+            $this->setTotales($data);
+            $this->setLegends($data);
+
+            $sunat = new SunatService;
+            $see = $sunat->getSee($this->company);
+
+            $invoice = $sunat->getInvoice($data);
+
+            $signed_xml_filename = null;
+            $cdr_path = null;
+
+            if (!$sale->cdr_path) {
+                $result = $see->send($invoice);
+
+                $response['xml'] = $see->getFactory()->getLastXml();
+
+                $response['hash'] = (new XmlUtils())->getHashSign($response['xml']);
+
+                $response['sunatResponse'] = $sunat->sunatResponse($result);
+
+                if (isset($response['xml'])) {
+
+                    $signed_xml_filename = Carbon::now()->format('Y/m') . '/' . $invoice->getName() . '.xml';
+
+                    Storage::disk('public')->put($signed_xml_filename, $response['xml']);
+                }
+
+                if (isset($response['sunatResponse']['cdrZip'])) {
+
+                    $cdr_path = Carbon::now()->format('Y/m') . '/' . $invoice->getName() . '.zip';
+                    Storage::disk('public')->put($cdr_path, base64_decode($response['sunatResponse']['cdrZip']));
+                }
+
+                if ($response['sunatResponse']['success'] == true) {
+
+                    if ($anticipo) {
+                        //Registrar en anticipos
+                        $prepayment = Prepayment::create([
+                            'sale_id' => $sale->id,
+                            'amount' => $anticipo_amount,
+                            'related_doc_type' => $serie,
+                            'related_doc_number' => $nextCorrelative,
+                            'total' => $sale->total_amount,
+                            'signed_xml_file' => $signed_xml_filename,
+                            'cdr_file' => $cdr_path,
+                        ]);
+
+                        $response['anticipo'] = true;
+                        $response['anticipo_id'] = $prepayment->id;
+
+                        $htmlInvoice = $sunat->getHtmlReport($invoice);
+                        $this->htmlToPdf($htmlInvoice, $invoice->getName(),$prepayment->id);
+
+                    } else {
+                        $sale->signed_xml_path = $signed_xml_filename;
+                        $sale->cdr_path = $cdr_path;
+                        $sale->document_code = $serie;
+                        $sale->document_correlative = $nextCorrelative;
+
+                        $response['anticipo'] = false;
+
+                        $htmlInvoice = $sunat->getHtmlReport($invoice);
+                        $this->htmlToPdf($htmlInvoice, $invoice->getName());
+
+                    }
+                    $sale->emision_date = $fechaEmision;
+                    $sale->save();
+
+                    if ($correlative) {
+                        $correlative->current_correlative = $nextCorrelative;
+                        $correlative->save();
+                    }
+
+                } else {
+                    throw new \Exception($response['sunatResponse']['error']['code'] . ' - ' . $response['sunatResponse']['error']['message']);
+
+                }
+            }
+
+            $response['invoice_name'] = $invoice->getName();
+            $response['status'] = true;
+
+        } catch (\Throwable $th) {
+
+            Log::error('Error en el proceso:', [
+                'message' => $th->getMessage(),
+                'file' => $th->getFile(),
+                'line' => $th->getLine()
+            ]);
+
+            $response = [
+                'message' => $th->getMessage(),
+                'status' => false,
+            ];
+        }
+
+        return $response;
+
+    }
+    public function htmlToPdf($html, $invoiceName,$inPrepayment = null)
+    {
 
         // Configura Dompdf
         $options = new Options();
@@ -387,6 +730,17 @@ class GenerateInvoiceSunatService
         // Guarda el archivo en el disco público
         Storage::disk('public')->put($filePath, $output);
 
+        if($inPrepayment!=null){
+            $prepayment = Prepayment::find($inPrepayment);
+            if($prepayment){
+                $prepayment->file_path = $filePath;
+                $prepayment->save();
+            }
+        }else{
+            $this->sale->xml_path = $filePath;
+            $this->sale->save();
+        }
+
         // Retorna la URL del archivo guardado
         return Storage::disk('public')->url($filePath);
     }
@@ -401,6 +755,7 @@ class GenerateInvoiceSunatService
         $data['mtoOperGratuitas'] = $details->whereNotIn('tipAfeIgv', [10, 20, 30, 40])->sum('mtoValorVenta');
 
         $data['mtoIGV'] = $details->whereIn('tipAfeIgv', [10, 20, 30, 40])->sum('igv');
+
         $data['mtoIGVGratuitas'] = $details->whereNotIn('tipAfeIgv', [10, 20, 30, 40])->sum('igv');
         $data['icbper'] = $details->sum('icbper');
         $data['totalImpuestos'] = $data['mtoIGV'] + $data['icbper'];

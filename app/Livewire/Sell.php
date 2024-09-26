@@ -119,6 +119,7 @@ class Sell extends Component
             }
 
             $this->currentSale = Sale::create($data);
+            
             $this->reCart();
 
         } catch (QueryException $e) {
@@ -143,9 +144,10 @@ class Sell extends Component
         }
 
         if (!$this->currentSale || $this->currentSale->status != 'cart') {
+            
             $this->addCart();
         }
-
+        
         if ($this->currentSale) {
 
             // Obtener todos los ítems en el carrito para este producto (sin importar la unidad)
@@ -323,23 +325,22 @@ class Sell extends Component
     }
     private function calculateSubtotalAndIGV($price, $igv_percent, $quantity)
     {
-        $igvRate = $igv_percent/100; // Tasa de IGV para operaciones gravadas
-
+        $igvRate = $igv_percent / 100; // Tasa de IGV
+    
+        // Precio total sin considerar si tiene o no IGV
+        $totalPrice = round($price * $quantity, 2);
+    
         if ($igv_percent > 0) { // Si es gravado con IGV
-            // Calcular el precio sin IGV
-            $priceWithoutIGV = round($price / (1 + $igvRate), 2);
-
-            // Calcular el subtotal sin IGV
-            $subtotal = round($priceWithoutIGV * $quantity, 2);
-
-            // Calcular el total IGV basado en el subtotal
-            $totalIGV = round($subtotal * $igvRate, 2);
+            // Calcular el monto de IGV desde el total
+            $totalIGV = round($totalPrice * $igvRate / (1 + $igvRate), 2);
+    
+            // Calcular el subtotal como el total menos el IGV
+            $subtotal = round($totalPrice - $totalIGV, 2);
         } else { // Si es exonerado
-            $priceWithoutIGV = $price;
-            $subtotal = round($priceWithoutIGV * $quantity, 2);
+            $subtotal = $totalPrice;
             $totalIGV = 0.00;
         }
-
+    
         return [$subtotal, $totalIGV];
     }
     protected function updateSaleTotal()

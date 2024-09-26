@@ -58,6 +58,10 @@ class Sale extends Model
     {
         return $this->hasMany(PaymentMethod::class);
     }
+    public function prepayments()
+    {
+        return $this->hasMany(Prepayment::class);
+    }
     public function branch()
     {
         return $this->belongsTo(Branch::class);
