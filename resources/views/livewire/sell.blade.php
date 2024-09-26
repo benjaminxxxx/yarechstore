@@ -242,7 +242,7 @@
 
                                 @if (file_exists(public_path($officialFilePath)) || file_exists(public_path($newPathOficial)))
 
-                                    @if (file_exists(public_path($newPathOficial)))
+                                    @if ($currentSale->xml_path && file_exists(public_path($newPathOficial)))
                                         <x-button-a target="_blank" href="{{ asset($newPathOficial) }}">
                                             {{ $buttonLabel }} A4
                                         </x-button-a>
