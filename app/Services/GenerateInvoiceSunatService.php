@@ -233,28 +233,40 @@ class GenerateInvoiceSunatService
         $this->invoiceType = InvoicesType::find($this->sale->invoice_type_id);
 
         $emitFactura = isset($options['emitFactura']) ? $options['emitFactura'] : true;
+        $regenerate = isset($options['regenerate']) ? $options['regenerate'] : false;
         $emitRecibo = isset($options['emitRecibo']) ? $options['emitRecibo'] : true;
         $emitFacturaAnticipo = isset($options['emitFacturaAnticipo']) ? $options['emitFacturaAnticipo'] : false;
 
-
+        
         try {
-            if (!isset($options['fechaEmision'])) {
-                throw new \Exception("Debe Ingresar una Fecha de Emosión Válida");
-            }
+            
 
+            if($regenerate){
+                $options['fechaEmision'] = $this->sale->emision_date;
+            }
+      
+            if (!isset($options['fechaEmision'])) {
+                throw new \Exception("Debe Ingresar una Fecha de Emisión Válida");
+            }
+            
+            
             $fechaEmision = $options['fechaEmision'];
+
+            
 
             if ($this->sale->status == 'paid') {
 
+                
+
                 $optionsVoucher = [];
 
-                if ($emitFactura) {
+                if ($emitFactura || $regenerate) {
 
                     $options = [
                         'sale_id' => $this->sale->id,
                         'fecha' => $fechaEmision
                     ];
-
+                
                     $responseInvoice = $this->createInvoice($options);
 
                     if (!$responseInvoice['status']) {
@@ -266,11 +278,14 @@ class GenerateInvoiceSunatService
                     $optionsVoucher['anticipo_id'] = isset($responseInvoice['anticipo_id'])?$responseInvoice['anticipo_id']:null;
                 }
 
-                if ($emitRecibo) {
+                if ($emitRecibo || $regenerate) {
+                 
                     $this->createSimpleVoucher("NORMAL",$optionsVoucher);
                 }
-
-                $this->sale->pay_date  = Carbon::now()->format('Y/m/d');
+                if(!$regenerate){
+                    $this->sale->pay_date  = Carbon::now()->format('Y/m/d');
+                }
+                
                 $this->sale->save();
 
                 $response['status'] = true;

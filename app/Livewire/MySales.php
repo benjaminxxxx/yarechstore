@@ -6,11 +6,12 @@ use App\Models\Branch;
 use App\Models\Sale;
 use App\Services\GenerateDocumentService;
 use App\Services\GenerateInvoiceSunatService;
+use Exception;
+use Illuminate\Support\Facades\Storage;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Session;
-use Storage;
 
 class MySales extends Component
 {
@@ -58,7 +59,15 @@ class MySales extends Component
             $sale = Sale::find($saleId);
             if($sale){
                 $generateInvoiceService = new GenerateInvoiceSunatService();
-                $generateInvoiceService->process($sale);
+
+                $options = [
+                    'regenerate' => true,
+                ];
+
+                $response = $generateInvoiceService->process($sale,$options);
+                if(!$response['status']){
+                    throw new Exception($response['message'], 1);                    
+                }
             }
             //$generateDocumentService = new GenerateDocumentService();
             //$generateDocumentService->createSimpleVoucher($saleId);
