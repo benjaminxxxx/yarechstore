@@ -216,7 +216,13 @@
                     </div>
                     <span class="ms-3">Correlatives</span>
                 </x-link>
-              
+
+                <x-link href="{{ route('supplier') }}" :active="request()->routeIs('supplier')">
+                    <div class="w-6">
+                        <i class="fa fa-list-ol"></i>
+                    </div>
+                    <span class="ms-3">Proveedores</span>
+                </x-link>
 
                 <x-nav-link-parent name="sectorConfiguracion" :active="request()->routeIs(['config.invoiceExtraInfomracion', 'config.site','company'])">
                     <i class="fa fa-cogs"></i>

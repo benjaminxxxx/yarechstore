@@ -69,6 +69,12 @@
                                 </a>
                             @endif
                         </div>
+
+                        <div class="mt-4">
+                            <x-button-a href="{{route('supplier.login')}}" class="w-full justify-center">
+                                SOY PROVEEDOR
+                            </x-button-a>
+                        </div>
                     </form>
                 </div>
             </div>

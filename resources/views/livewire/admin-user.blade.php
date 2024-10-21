@@ -26,7 +26,7 @@
                     </tr>
                 </x-slot>
                 <x-slot name="tbody">
-                    @if ($users && $users->count())
+                    @if ($users && $users->count()>0)
                         @foreach ($users as $user)
                             <x-tr>
                                 <x-th value="{{ $user->name }}" />

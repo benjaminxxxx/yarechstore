@@ -10,10 +10,18 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\CorrelativeController;
+use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UnitController;
 use App\Http\Middleware\CheckBranches;
 use App\Http\Middleware\CheckBranchSelected;
+use App\Models\Role;
+use App\Models\User;
+use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+
+Route::get('/login/supplier', [SupplierController::class,'login'])->name('supplier.login');
 
 Route::middleware([
     'auth:sanctum',
@@ -39,4 +47,38 @@ Route::middleware([
 
     Route::get('/config/invoice-extra-information', [ConfigController::class,'invoiceExtraInfomracion'])->name('config.invoiceExtraInfomracion');
     Route::get('/config/site', [ConfigController::class,'site'])->name('config.site');
+
+    Route::get('/supplier', [SupplierController::class,'index'])->name('supplier');
+    
+});
+
+
+Route::get('/auth/google', function () {
+    return Socialite::driver('google')->redirect();
+});
+
+Route::get('/auth/google/callback', function () {
+    $user = Socialite::driver('google')->user();
+
+    // Lógica para autenticar al usuario o crearlo en la base de datos.
+    $existingUser = User::where('email', $user->getEmail())->first();
+    
+    if ($existingUser) {
+        Auth::login($existingUser);
+    } else {
+        $role = Role::firstOrCreate(
+            ['name' => 'Proveedor']  // Buscar por nombre, si no existe, crear con este nombre
+        );
+
+        // Crea el usuario si no existe
+        $newUser = User::create([
+            'name' => $user->getName(),
+            'email' => $user->getEmail(),
+            'role_id' => $role->id,    
+            'password' => bcrypt( Str::random(16)),  // Puedes generar una contraseña aleatoria o dejar el campo vacío
+        ]);
+        Auth::login($newUser);
+    }
+
+    return redirect('/dashboard');  // Redirige a tu dashboard o donde desees.
 });

@@ -470,6 +470,7 @@ class GenerateInvoiceSunatService
             $date = new DateTime($fecha, new \DateTimeZone('America/Lima'));
             $date->setTime(date('H'), date('i'), date('s'));
             $fechaEmision = $date->format('Y-m-d\TH:i:sP');
+            $fechaEmisionGuardado = $date->format('Y-m-d');
 
 
             $details = [];
@@ -603,7 +604,7 @@ class GenerateInvoiceSunatService
                 $data['subTotal'] = $anticipoAmount;
                 $data['mtoImpVenta'] = $anticipoAmount;
             }
-
+            //dd($data);
 
             $this->setTotales($data);
             $this->setLegends($data);
@@ -670,7 +671,7 @@ class GenerateInvoiceSunatService
                         $this->htmlToPdf($htmlInvoice, $invoice->getName());
 
                     }
-                    $sale->emision_date = $fechaEmision;
+                    $sale->emision_date = $fechaEmisionGuardado;
                     $sale->save();
 
                     if ($correlative) {
