@@ -28,55 +28,72 @@
                             <img src="{{ asset('image/logo.svg') }}" alt="Logo" class="h-7">
                         </div>
                         <h1 class="hidden md:block mb-10 font-bold text-2xl text-secondaryText">Vamos a iniciar!</h1>
-                        <form method="POST" action="{{ route('login') }}">
-                            @csrf
-
+                        <form wire:submit="iniciarSesion">
                             <div>
-                                <x-input id="email" class="block mt-1 w-full" type="email" name="email"
-                                    :value="old('email')" placeholder="Email" required autofocus />
+                                <x-input type="email" wire:model="email" placeholder="Email" required autofocus />
                             </div>
 
                             <div class="mt-4">
-                                <x-input id="password" placeholder="Contraseña" class="block mt-1 w-full"
-                                    type="password" name="password" required />
+                                <x-input type="password" wire:model="password" placeholder="Contraseña" required />
                             </div>
 
                             <div class="block my-5">
                                 <label for="remember_me" class="flex items-center">
-                                    <x-checkbox id="remember_me" name="remember" />
-                                    <span class="ms-2 text-sm text-secondaryText">Recordar sesión</span>
+                                    <x-checkbox id="remember_me" wire:model="remember" />
+                                    <span class="ms-2 text-sm">Recordar sesión</span>
                                 </label>
                             </div>
 
-                            <div class="">
+                            @if (session()->has('error'))
+                                <div class="text-sm my-3 text-red-600">
+                                    {{ session('error') }}
+                                </div>
+                            @endif
 
-
-                                <x-secondary-button type="submit" class="w-full justify-center">
-                                    INGRESAR
-                                </x-secondary-button>
-                            </div>
-
-                            <div>
-                                @if (Route::has('password.request'))
-                                    <a class="underline text-sm text-secondaryText hover:text-secondaryText rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary dark:focus:ring-offset-gray-800"
-                                        href="{{ route('password.request') }}">
-                                        ¿Olvidó su contraseña?
-                                    </a>
-                                @endif
-                            </div>
-
-                            <div class="mt-4">
-                                <x-button-a href="{{ route('login') }}" class="w-full justify-center">
-                                    VOLVER
-                                </x-button-a>
-                            </div>
+                            <x-button type="submit" class="w-full justify-center">
+                                Ingresar
+                            </x-button>
                         </form>
+
+                        <div>
+                            @if (Route::has('password.request'))
+                                <a class="underline text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary dark:focus:ring-offset-gray-800"
+                                    href="{{ route('password.request') }}">
+                                    ¿Olvidó su contraseña?
+                                </a>
+                            @endif
+                        </div>
+
+                        <div class="inline-flex items-center justify-center w-full">
+                            <hr class="w-64 h-px my-8 bg-gray-200 border-0 dark:bg-gray-700">
+                            <span
+                                class="absolute px-3 font-medium text-gray-900 -translate-x-1/2 bg-white left-1/2 dark:text-white dark:bg-gray-900">ó</span>
+                        </div>
+
+                        <div>
+                            <button type="button"
+                                class="w-full flex items-center justify-center gap-3 border border-1 border-gray-400 hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-[#4285F4]/50 font-medium rounded-lg text-sm px-5 py-2.5">
+                                <img src="{{ asset('image/google.png') }}" width="20px" alt="Sign with Google" />
+                                Continue with Google
+                            </button>
+                        </div>
+
+
+
+                        <div class="mt-4">
+                            <a href="{{ route('login') }}"
+                                class="w-full justify-center underline text-bindigo-600 text-center block">
+                                Volver
+                            </a>
+                        </div>
+
                     </div>
                 </div>
             </div>
             <!-- Right Panel -->
             <div class="hidden md:block w-full md:w-1/2 flex items-center justify-center h-full">
-                <img src="{{ asset('image/banner_supplier.webp') }}" class="h-full w-full object-cover" alt="Yarech Supplier Logo">
+                <img src="{{ asset('image/banner_supplier.webp') }}" class="h-full w-full object-cover"
+                    alt="Yarech Supplier Logo">
             </div>
         </div>
     </div>

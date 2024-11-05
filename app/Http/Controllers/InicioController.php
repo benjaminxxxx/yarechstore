@@ -6,12 +6,15 @@ use Illuminate\Http\Request;
 use Session;
 use App\Models\CashRegister;
 use App\Models\Branch;
+use App\Models\Role;
+use Illuminate\Support\Facades\Auth;
 
 class InicioController extends Controller
 {
 
     public function index()
     {
+
         $branchCode = Session::get('selected_branch');
 
         if ($branchCode) {

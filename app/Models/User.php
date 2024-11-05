@@ -72,4 +72,13 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Role::class);
     }
+    public function suppliers()
+    {
+        return $this->hasMany(Supplier::class);
+    }
+    public function purchases()
+    {
+        // Accedemos a todas las compras a través de los suppliers
+        return $this->hasManyThrough(Purchase::class, Supplier::class, 'user_id', 'supplier_id');
+    }
 }

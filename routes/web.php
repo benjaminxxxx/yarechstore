@@ -15,6 +15,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\UnitController;
 use App\Http\Middleware\CheckBranches;
 use App\Http\Middleware\CheckBranchSelected;
+use App\Http\Middleware\SupplierMiddleware;
 use App\Models\Role;
 use App\Models\User;
 use Laravel\Socialite\Facades\Socialite;
@@ -22,6 +23,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 Route::get('/login/supplier', [SupplierController::class,'login'])->name('supplier.login');
+
+Route::middleware(['auth:sanctum', SupplierMiddleware::class])->prefix('supplier')->group(function () {
+    Route::get('/dashboard', [SupplierController::class, 'dashboard'])->name('supplier.dashboard');
+    Route::get('/companies', [SupplierController::class, 'companies'])->name('supplier.companies');
+    Route::get('/sales', [SupplierController::class, 'xml'])->name('supplier.xml');
+});
 
 Route::middleware([
     'auth:sanctum',
@@ -60,25 +67,33 @@ Route::get('/auth/google', function () {
 Route::get('/auth/google/callback', function () {
     $user = Socialite::driver('google')->user();
 
-    // Lógica para autenticar al usuario o crearlo en la base de datos.
-    $existingUser = User::where('email', $user->getEmail())->first();
-    
+    $existingUser = User::where('google_account_id', $user->getId())
+    ->orWhere('email', $user->getEmail())
+    ->first();
+
     if ($existingUser) {
+        // Si el usuario ya existe, actualiza su google_account_id si está vacío
+        if (!$existingUser->google_account_id) {
+            $existingUser->google_account_id = $user->getId();
+            $existingUser->save();
+        }
         Auth::login($existingUser);
     } else {
         $role = Role::firstOrCreate(
             ['name' => 'Proveedor']  // Buscar por nombre, si no existe, crear con este nombre
         );
 
-        // Crea el usuario si no existe
+        // Crea un nuevo usuario si no existe
         $newUser = User::create([
+            'code' => Str::random(15),
             'name' => $user->getName(),
             'email' => $user->getEmail(),
-            'role_id' => $role->id,    
-            'password' => bcrypt( Str::random(16)),  // Puedes generar una contraseña aleatoria o dejar el campo vacío
+            'google_account_id' => $user->getId(),  // Guarda el google_account_id
+            'role_id' => $role->id,
+            'password' => bcrypt(Str::random(16)),  // Genera una contraseña aleatoria o personalizada
         ]);
         Auth::login($newUser);
     }
 
-    return redirect('/dashboard');  // Redirige a tu dashboard o donde desees.
+    return to_route('dashboard');  // Redirige a tu dashboard o donde desees.
 });

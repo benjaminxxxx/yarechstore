@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Role;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,9 +19,19 @@ class CheckBranchSelected
     public function handle(Request $request, Closure $next): Response
     {
         $user = Auth::user();
+        $role = Role::where('name', 'Proveedor')->first();
+        $role_id = 0;
+        if ($role) {
+            $role_id = $role->id;
+        }
+        
+        if($user->role_id == $role_id){
+            return redirect()->route('supplier.dashboard');
+        }
         //dd(Session::has('selected_branch'));
         // Verifica si el usuario no es super administrador
         if ($user->role_id != 1) {
+          
             $branches = $user->branches();
             if($branches){
                 if($branches->count()==1){

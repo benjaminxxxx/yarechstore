@@ -3,6 +3,6 @@
         Proveedores
     </x-slot>
 
-    <livewire:supplier-list/>
+    <livewire:supplier-register-xml/>
     
 </x-supplier-layout>

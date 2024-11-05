@@ -15,6 +15,11 @@ class Supplier extends Model
         'phone',
         'email',
         'address',
-        'whatsapp'
+        'whatsapp',
+        'user_id'
     ];
+    public function purchases()
+    {
+        return $this->hasMany(Purchase::class);
+    }
 }

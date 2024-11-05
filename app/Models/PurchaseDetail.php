@@ -15,6 +15,11 @@ class PurchaseDetail extends Model
         'quantity',
         'price',
         'status',
+
+        'product_price',
+        'product_name',
+        'product_identification',
+        'product_tax_amount'
     ];
 
     public function purchase()

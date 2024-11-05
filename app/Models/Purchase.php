@@ -17,7 +17,10 @@ class Purchase extends Model
         'operation_number',
         'total_amount',
         'status',
-        'branch_id'
+        'branch_id',
+        'xml_file',
+        'tax_amount',
+        'sub_total'
     ];
 
     public function details()
@@ -28,5 +31,9 @@ class Purchase extends Model
     public function defectiveProducts()
     {
         return $this->hasMany(DefectiveProduct::class);
+    }
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class);
     }
 }
